@@ -9,6 +9,8 @@ edition = "2018"
 anyhow = "1.0.32"
 curve25519-dalek = "2.1.0"
 hex = "0.4.2"
-ed25519-dalek = "1.0.0-pre.4"
 rand = "0.7.3"
 sha2 = "0.9.1"
+
+[dev-dependencies]
+ed25519-dalek = "1.0.0-pre.4"

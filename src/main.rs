@@ -1,8 +1,5 @@
 use anyhow::{anyhow, Result};
-use core::{
-    convert::TryFrom,
-    ops::{Add, Index, IndexMut, Mul, Neg, Sub},
-};
+use core::ops::{Add, Neg};
 
 use curve25519_dalek::{
     constants::ED25519_BASEPOINT_POINT, edwards::EdwardsPoint, scalar::Scalar, traits::IsIdentity,
@@ -412,7 +409,7 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
     debug_assert!(a.is_canonical());
     debug_assert!(a != Scalar::zero());
     // Pick a random nonce
-    let mut nonce_bytes = [0u8; 32];
+    let nonce_bytes = [0u8; 32];
     rng.fill_bytes(&mut scalar_bytes);
 
     // Pick a torsion component
@@ -481,7 +478,7 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
         hex::encode(&serialize_signature(&r, &s))
     );
     let tv2 = TestVector {
-        message: message.clone(),
+        message: message,
         pub_key: pub_key.compress().to_bytes(),
         signature: serialize_signature(&r, &s),
     };
@@ -495,4 +492,61 @@ fn main() -> Result<()> {
     non_zero_small_mixed()?;
     non_zero_mixed_mixed()?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ed25519_dalek::{PublicKey, Signature, Verifier};
+    use std::convert::TryFrom;
+
+    fn unpack_test_vector(t: &TestVector) -> (PublicKey, Signature) {
+        let pk = PublicKey::from_bytes(&t.pub_key[..]).unwrap();
+        let sig = Signature::try_from(&t.signature[..]).unwrap();
+        (pk, sig)
+    }
+
+    #[test]
+    fn test_zero_small_small() {
+        let (tv1, tv2) = zero_small_small().unwrap();
+        let (pk1, sig1) = unpack_test_vector(&tv1);
+        let (pk2, sig2) = unpack_test_vector(&tv2);
+
+        // only the second passes dalek's cofactorless
+        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
+        assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+    }
+
+    #[test]
+    fn test_non_zero_mixed_small() {
+        let (tv1, tv2) = non_zero_mixed_small().unwrap();
+        let (pk1, sig1) = unpack_test_vector(&tv1);
+        let (pk2, sig2) = unpack_test_vector(&tv2);
+
+        // only the second passes dalek's cofactorless
+        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
+        assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+    }
+
+    #[test]
+    fn test_non_zero_small_mixed() {
+        let (tv1, tv2) = non_zero_small_mixed().unwrap();
+        let (pk1, sig1) = unpack_test_vector(&tv1);
+        let (pk2, sig2) = unpack_test_vector(&tv2);
+
+        // only the second passes dalek's cofactorless
+        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
+        assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+    }
+
+    #[test]
+    fn test_non_zero_mixed_mixed() {
+        let (tv1, tv2) = non_zero_mixed_mixed().unwrap();
+        let (pk1, sig1) = unpack_test_vector(&tv1);
+        let (pk2, sig2) = unpack_test_vector(&tv2);
+
+        // only the second passes dalek's cofactorless
+        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
+        assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+    }
 }
