@@ -203,7 +203,7 @@ pub fn zero_small_small() -> Result<(TestVector, TestVector), anyhow::Error> {
     let mut message = [0u8; 32];
     rng.fill_bytes(&mut message);
     if (r + compute_hram(&message, &pub_key, &r) * pub_key).is_identity() {
-        panic!("wrong rng seed")
+        return Err(anyhow!("wrong rng seed"));
     }
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
@@ -265,7 +265,7 @@ pub fn non_zero_mixed_small() -> Result<(TestVector, TestVector)> {
     let mut message = [0u8; 32];
     rng.fill_bytes(&mut message);
     if (pub_key.neg() + compute_hram(&message, &pub_key, &r) * pub_key).is_identity() {
-        panic!("wrong rng seed");
+        return Err(anyhow!("wrong rng seed"));
     }
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
@@ -326,7 +326,7 @@ pub fn non_zero_small_mixed() -> Result<(TestVector, TestVector)> {
     let mut message = [0u8; 32];
     rng.fill_bytes(&mut message);
     if (r + compute_hram(&message, &pub_key, &r) * r.neg()).is_identity() {
-        panic!("wrong rng seed");
+        return Err(anyhow!("wrong rng seed"));
     }
     let s = compute_hram(&message, &pub_key, &r) * a;
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
@@ -403,7 +403,7 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
     let mut r = prelim_r * ED25519_BASEPOINT_POINT + small_pt.neg();
 
     if (small_pt.neg() + compute_hram(&message, &pub_key, &r) * small_pt).is_identity() {
-        panic!("wrong rng seed");
+        return Err(anyhow!("wrong rng seed"));
     }
     let s = prelim_r + compute_hram(&message, &pub_key, &r) * a;
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
