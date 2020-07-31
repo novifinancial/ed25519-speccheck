@@ -172,7 +172,7 @@ fn verify_final_pre_reduced_cofactored(
     hash: &Scalar,
 ) -> Result<()> {
     let eight_hash = eight() * hash;
-    let eight_s = eight() * &unpacked_signature.1;
+    let eight_s = eight() * unpacked_signature.1;
 
     let rprime =
         EdwardsPoint::vartime_double_scalar_mul_basepoint(&eight_hash, &pub_key.neg(), &eight_s);
@@ -490,7 +490,7 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
 }
 
 fn multiple_of_eight_le(scalar: Scalar) -> bool {
-    scalar.to_bytes()[31] & 7 == 0
+    scalar.to_bytes()[31].trailing_zeros() >= 3
 }
 
 fn pre_reduced_scalar() -> Result<TestVector> {
