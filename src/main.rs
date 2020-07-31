@@ -53,6 +53,14 @@ const EIGHT_TORSION: [[u8; 32]; 8] = [
     ],
 ];
 
+// 8 as a Scalar - to reflect instructions of "interpreting values as
+// integers"
+fn eight() -> Scalar {
+    let mut bytes = [0u8; 32];
+    bytes[31] |= 8;
+    Scalar::from_bytes_mod_order(bytes)
+}
+
 pub fn check_slice_size<'a>(
     slice: &'a [u8],
     expected_len: usize,
@@ -129,6 +137,15 @@ fn verify_cofactorless(
     verify_final_cofactorless(pub_key, unpacked_signature, &k)
 }
 
+fn verify_pre_reduced_cofactored(
+    message: &[u8],
+    pub_key: &EdwardsPoint,
+    unpacked_signature: &(EdwardsPoint, Scalar),
+) -> Result<()> {
+    let k = compute_hram(message, pub_key, &unpacked_signature.0);
+    verify_final_pre_reduced_cofactored(pub_key, unpacked_signature, &k)
+}
+
 fn verify_final_cofactored(
     pub_key: &EdwardsPoint,
     unpacked_signature: &(EdwardsPoint, Scalar),
@@ -146,6 +163,23 @@ fn verify_final_cofactored(
         Ok(())
     } else {
         Err(anyhow!("Invalid cofactored signature"))
+    }
+}
+
+fn verify_final_pre_reduced_cofactored(
+    pub_key: &EdwardsPoint,
+    unpacked_signature: &(EdwardsPoint, Scalar),
+    hash: &Scalar,
+) -> Result<()> {
+    let eight_hash = eight() * hash;
+    let eight_s = eight() * &unpacked_signature.1;
+
+    let rprime =
+        EdwardsPoint::vartime_double_scalar_mul_basepoint(&eight_hash, &pub_key.neg(), &eight_s);
+    if (unpacked_signature.0.mul_by_cofactor() - rprime).is_identity() {
+        Ok(())
+    } else {
+        Err(anyhow!("Invalid pre-reduced cofactored signature"))
     }
 }
 
@@ -455,11 +489,80 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
     Ok((tv1, tv2))
 }
 
+fn multiple_of_eight_le(scalar: Scalar) -> bool {
+    scalar.to_bytes()[31] & 7 == 0
+}
+
+fn pre_reduced_scalar() -> Result<TestVector> {
+    let mut rng = new_rng();
+
+    // Pick a random scalar
+    let mut scalar_bytes = [0u8; 32];
+    rng.fill_bytes(&mut scalar_bytes);
+    let a = Scalar::from_bytes_mod_order(scalar_bytes);
+    debug_assert!(a.is_canonical());
+    debug_assert!(a != Scalar::zero());
+    // Pick a random nonce
+    let nonce_bytes = [0u8; 32];
+    rng.fill_bytes(&mut scalar_bytes);
+
+    // generate the r of a "normal" signature
+    let prelim_pub_key = a * ED25519_BASEPOINT_POINT;
+
+    // Pick a torsion point
+    let small_idx: usize = rng.next_u64() as usize;
+    let small_pt = pick_small_nonzero_point(small_idx + 1);
+    let pub_key = prelim_pub_key + small_pt;
+
+    let mut message = [0u8; 32];
+    rng.fill_bytes(&mut message);
+    let mut h = Sha512::new();
+    h.update(&nonce_bytes);
+    h.update(&message);
+
+    let mut output = [0u8; 64];
+    output.copy_from_slice(h.finalize().as_slice());
+    let r_scalar = curve25519_dalek::scalar::Scalar::from_bytes_mod_order_wide(&output);
+    let r = r_scalar * ED25519_BASEPOINT_POINT;
+
+    // grind a k so that 8*k gets reduced to a number NOT multiple of eight,
+    // and add a small order component to the public key.
+    while multiple_of_eight_le(eight() * compute_hram(&message, &pub_key, &r)) {
+        rng.fill_bytes(&mut message);
+    }
+
+    let s = r_scalar + compute_hram(&message, &pub_key, &r) * a;
+
+    // that's because we do cofactored verification without pre-reducing scalars
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
+
+    // pre-reducing is a mistake
+    debug_assert!(verify_pre_reduced_cofactored(&message, &pub_key, &(r, s)).is_err());
+
+    // as expected
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
+    println!(
+        "S > 0, mixed A, large order R\n\
+         passes cofactored, fails pre-reducing cofactored, fails cofactorless\n\
+         message: {}, pub_key: {}, signature: {}",
+        hex::encode(&message),
+        hex::encode(&pub_key.compress().as_bytes()),
+        hex::encode(&serialize_signature(&r, &s))
+    );
+    let tv = TestVector {
+        message,
+        pub_key: pub_key.compress().to_bytes(),
+        signature: serialize_signature(&r, &s),
+    };
+    Ok(tv)
+}
+
 fn main() -> Result<()> {
     zero_small_small()?;
     non_zero_mixed_small()?;
     non_zero_small_mixed()?;
     non_zero_mixed_mixed()?;
+    pre_reduced_scalar()?;
     Ok(())
 }
 
@@ -517,5 +620,19 @@ mod tests {
         // only the second passes dalek's cofactorless
         assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
         assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+    }
+
+    #[test]
+    fn test_multiple_eight() {
+        assert!(multiple_of_eight_le(eight()))
+    }
+
+    #[test]
+    fn test_pre_reduced_scalar() {
+        let tv = pre_reduced_scalar().unwrap();
+        let (pk, sig) = unpack_test_vector(&tv);
+
+        // dalek is cofactorless
+        assert!(pk.verify(&tv.message[..], &sig).is_err());
     }
 }
