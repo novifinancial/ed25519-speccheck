@@ -4,6 +4,9 @@ import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import net.i2p.crypto.eddsa.Utils;
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
 import net.i2p.crypto.eddsa.spec.EdDSAParameterSpec;
+import org.bouncycastle.crypto.Signer;
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
+import org.bouncycastle.crypto.signers.Ed25519Signer;
 
 import java.security.MessageDigest;
 import java.security.spec.InvalidKeySpecException;
@@ -39,16 +42,35 @@ public class Ed25519TestCase {
     }
 
     /**
-     * Pure Ed25519 signature verification, it returns false if it fails or if an exception occurs).
+     * Pure Ed25519 signature verification using the i2p lib, it returns false if it fails or if an exception occurs).
      **/
-    public boolean verify() {
+    public boolean verify_i2p() {
         try {
             EdDSAPublicKey publicKey = decodePublicKey();
-            byte[] messageBytes = Utils.hexToBytes(messageHex);
-            byte[] signatureBytes = Utils.hexToBytes(signatureHex);
+            byte[] messageBytes = Utils.hexToBytes(this.messageHex);
+            byte[] signatureBytes = Utils.hexToBytes(this.signatureHex);
             EdDSAEngine sgr = new EdDSAEngine(MessageDigest.getInstance(spec.getHashAlgorithm()));
             sgr.initVerify(publicKey);
             return sgr.verifyOneShot(messageBytes, signatureBytes);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Pure Ed25519 signature verification using the BC lib, it returns false if it fails or if an exception occurs).
+     **/
+    public boolean verify_bc() {
+        try {
+            Ed25519PublicKeyParameters publicKey = new Ed25519PublicKeyParameters(
+                    Utils.hexToBytes(this.publicKeyHex), 0);
+            byte[] messageBytes = Utils.hexToBytes(this.messageHex);
+            byte[] signatureBytes = Utils.hexToBytes(this.signatureHex);
+
+            Signer signer = new Ed25519Signer();
+            signer.init(false, publicKey);
+            signer.update(messageBytes, 0, messageBytes.length);
+            return signer.verifySignature(signatureBytes);
         } catch (Exception e) {
             return false;
         }
