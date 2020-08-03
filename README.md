@@ -3,6 +3,8 @@
 
 ## Condition table
 
+Those are a few of the cases we would like to cover:
+
 ```
 | | parameters              | cofactored        | cofactorless                     | comment                               |
 |-+-------------------------+-------------------+----------------------------------+---------------------------------------|
@@ -17,6 +19,12 @@
 ```
 
 Here "mixed" means with a strictly positive torsion component but not small,
-i.e. "mixed" and "small" are mutually exclusive.
+i.e. "mixed" and "small" are mutually exclusive. Besides that, we also test:
+
+- a large S > L.
+- "pre-reduced" scalar, namely if the verification equation is
+  `[8] R + [8 k] A = [8 s] B` rather than the recommended `[8] (R + k A) = [8] sB`.
 
 ## Randomized batching
+
+TODO

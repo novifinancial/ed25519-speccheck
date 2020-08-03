@@ -631,56 +631,91 @@ fn main() -> Result<()> {
 mod tests {
     use super::*;
     use ed25519_dalek::{PublicKey, Signature, Verifier};
+    use ed25519_zebra::{Signature as ZSignature, VerificationKey as ZPublicKey};
     use std::convert::TryFrom;
 
-    fn unpack_test_vector(t: &TestVector) -> (PublicKey, Signature) {
+    fn unpack_test_vector_dalek(t: &TestVector) -> (PublicKey, Signature) {
         let pk = PublicKey::from_bytes(&t.pub_key[..]).unwrap();
         let sig = Signature::try_from(&t.signature[..]).unwrap();
+        (pk, sig)
+    }
+
+    fn unpack_test_vector_zebra(t: &TestVector) -> (ZPublicKey, ZSignature) {
+        let pk = ZPublicKey::try_from(&t.pub_key[..]).unwrap();
+        let sig = ZSignature::try_from(&t.signature[..]).unwrap();
         (pk, sig)
     }
 
     #[test]
     fn test_zero_small_small() {
         let (tv1, tv2) = zero_small_small().unwrap();
-        let (pk1, sig1) = unpack_test_vector(&tv1);
-        let (pk2, sig2) = unpack_test_vector(&tv2);
+        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
+        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
 
         // only the second passes dalek's cofactorless
         assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
         assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+
+        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
+        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
+
+        // both pass zebra's cofactored
+        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_ok());
+        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
     }
 
     #[test]
     fn test_non_zero_mixed_small() {
         let (tv1, tv2) = non_zero_mixed_small().unwrap();
-        let (pk1, sig1) = unpack_test_vector(&tv1);
-        let (pk2, sig2) = unpack_test_vector(&tv2);
+        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
+        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
 
         // only the second passes dalek's cofactorless
         assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
         assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+
+        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
+        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
+
+        // both pass zebra's cofactored
+        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_ok());
+        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
     }
 
     #[test]
     fn test_non_zero_small_mixed() {
         let (tv1, tv2) = non_zero_small_mixed().unwrap();
-        let (pk1, sig1) = unpack_test_vector(&tv1);
-        let (pk2, sig2) = unpack_test_vector(&tv2);
+        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
+        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
 
         // only the second passes dalek's cofactorless
         assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
         assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+
+        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
+        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
+
+        // both pass zebra's cofactored
+        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_ok());
+        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
     }
 
     #[test]
     fn test_non_zero_mixed_mixed() {
         let (tv1, tv2) = non_zero_mixed_mixed().unwrap();
-        let (pk1, sig1) = unpack_test_vector(&tv1);
-        let (pk2, sig2) = unpack_test_vector(&tv2);
+        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
+        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
 
         // only the second passes dalek's cofactorless
         assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
         assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+
+        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
+        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
+
+        // both pass zebra's cofactored
+        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_ok());
+        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
     }
 
     #[test]
@@ -691,19 +726,29 @@ mod tests {
     #[test]
     fn test_pre_reduced_scalar() {
         let tv = pre_reduced_scalar().unwrap();
-        let (pk, sig) = unpack_test_vector(&tv);
+        let (pk, sig) = unpack_test_vector_dalek(&tv);
 
         // dalek is cofactorless
         assert!(pk.verify(&tv.message[..], &sig).is_err());
+
+        let (zpk, zsig) = unpack_test_vector_zebra(&tv);
+
+        // zebra is cofactored but doesn't pre-reduce
+        assert!(zpk.verify(&zsig, &tv.message[..]).is_ok());
     }
 
     #[test]
     fn test_large_s() {
         let tv = large_s().unwrap();
 
-        let (pk, sig) = unpack_test_vector(&tv);
+        let (pk, sig) = unpack_test_vector_dalek(&tv);
 
         // dalek refuses large scalars
         assert!(pk.verify(&tv.message[..], &sig).is_err());
+
+        let (zpk, zsig) = unpack_test_vector_zebra(&tv);
+
+        // zebra also refuses large scalars
+        assert!(zpk.verify(&zsig, &tv.message[..]).is_err());
     }
 }

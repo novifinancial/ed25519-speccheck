@@ -14,3 +14,4 @@ sha2 = "0.9.1"
 
 [dev-dependencies]
 ed25519-dalek = "1.0.0-pre.4"
+ed25519-zebra = "2.1.1"
