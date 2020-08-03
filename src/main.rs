@@ -61,6 +61,10 @@ fn eight() -> Scalar {
     Scalar::from_bytes_mod_order(bytes)
 }
 
+fn multiple_of_eight_le(scalar: Scalar) -> bool {
+    scalar.to_bytes()[31].trailing_zeros() >= 3
+}
+
 pub fn check_slice_size<'a>(
     slice: &'a [u8],
     expected_len: usize,
@@ -172,7 +176,7 @@ fn verify_final_pre_reduced_cofactored(
     hash: &Scalar,
 ) -> Result<()> {
     let eight_hash = eight() * hash;
-    let eight_s = eight() * &unpacked_signature.1;
+    let eight_s = eight() * unpacked_signature.1;
 
     let rprime =
         EdwardsPoint::vartime_double_scalar_mul_basepoint(&eight_hash, &pub_key.neg(), &eight_s);
@@ -415,7 +419,6 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
     let nonce_bytes = [0u8; 32];
     rng.fill_bytes(&mut scalar_bytes);
 
-    // Pick a torsion component
     // Pick a torsion point
     let small_idx: usize = rng.next_u64() as usize;
     let small_pt = pick_small_nonzero_point(small_idx + 1);
@@ -489,10 +492,6 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
     Ok((tv1, tv2))
 }
 
-fn multiple_of_eight_le(scalar: Scalar) -> bool {
-    scalar.to_bytes()[31] & 7 == 0
-}
-
 fn pre_reduced_scalar() -> Result<TestVector> {
     let mut rng = new_rng();
 
@@ -557,12 +556,74 @@ fn pre_reduced_scalar() -> Result<TestVector> {
     Ok(tv)
 }
 
+mod non_reducing_scalar52;
+use non_reducing_scalar52::Scalar52;
+
+fn large_s() -> Result<TestVector> {
+    let mut rng = new_rng();
+    // Pick a random scalar
+    let mut scalar_bytes = [0u8; 32];
+    rng.fill_bytes(&mut scalar_bytes);
+    let a = Scalar::from_bytes_mod_order(scalar_bytes);
+    debug_assert!(a.is_canonical());
+    debug_assert!(a != Scalar::zero());
+    // Pick a random nonce
+    let nonce_bytes = [0u8; 32];
+    rng.fill_bytes(&mut scalar_bytes);
+
+    // generate the r of a "normal" signature
+    let pub_key = a * ED25519_BASEPOINT_POINT;
+
+    let mut message = [0u8; 32];
+    rng.fill_bytes(&mut message);
+    let mut h = Sha512::new();
+    h.update(&nonce_bytes);
+    h.update(&message);
+
+    let mut output = [0u8; 64];
+    output.copy_from_slice(h.finalize().as_slice());
+    let r_scalar = curve25519_dalek::scalar::Scalar::from_bytes_mod_order_wide(&output);
+
+    let r = r_scalar * ED25519_BASEPOINT_POINT;
+
+    let s = r_scalar + compute_hram(&message, &pub_key, &r) * a;
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
+
+    let s_nonreducing = Scalar52::from_bytes(&s.to_bytes());
+    let s_prime_bytes = Scalar52::add(&s_nonreducing, &non_reducing_scalar52::L).to_bytes();
+    // using deserialize_scalar is key here, we use `from_bits` to represent
+    // the scalar
+    let s_prime = deserialize_scalar(&s_prime_bytes)?;
+
+    debug_assert!(s != s_prime);
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s_prime)).is_ok());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s_prime)).is_ok());
+
+    println!(
+        "S > L, large order A, large order R\n\
+         passes cofactored, passes  cofactorless, often excluded from both, breaks strong unforgeability\n\
+         message: {}, pub_key: {}, signature: {}",
+        hex::encode(&message),
+        hex::encode(&pub_key.compress().as_bytes()),
+        hex::encode(&serialize_signature(&r, &s_prime))
+    );
+    let tv = TestVector {
+        message,
+        pub_key: pub_key.compress().to_bytes(),
+        signature: serialize_signature(&r, &s_prime),
+    };
+
+    Ok(tv)
+}
+
 fn main() -> Result<()> {
     zero_small_small()?;
     non_zero_mixed_small()?;
     non_zero_small_mixed()?;
     non_zero_mixed_mixed()?;
     pre_reduced_scalar()?;
+    large_s()?;
     Ok(())
 }
 
@@ -633,6 +694,16 @@ mod tests {
         let (pk, sig) = unpack_test_vector(&tv);
 
         // dalek is cofactorless
+        assert!(pk.verify(&tv.message[..], &sig).is_err());
+    }
+
+    #[test]
+    fn test_large_s() {
+        let tv = large_s().unwrap();
+
+        let (pk, sig) = unpack_test_vector(&tv);
+
+        // dalek refuses large scalars
         assert!(pk.verify(&tv.message[..], &sig).is_err());
     }
 }
