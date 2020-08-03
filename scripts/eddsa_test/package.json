@@ -1,0 +1,3 @@
+{ "scripts" :
+  { "eddsa_test": "node eddsa_test.js"}
+}
