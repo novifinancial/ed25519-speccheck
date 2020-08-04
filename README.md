@@ -28,3 +28,21 @@ i.e. "mixed" and "small" are mutually exclusive. Besides that, we also test:
 ## Randomized batching
 
 TODO
+
+
+## Verified libraries
+
+- [Dalek](https://github.com/dalek-cryptography/ed25519-dalek) : in unit tests,
+- [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests,
+- BoringSSL, through [Ring](https://github.com/briansmith/ring): in unit tests,
+- [Go-ed25519](https://golang.org/pkg/crypto/ed25519/), in scripts/ed25519_test.go
+- [ed25519-java](https://github.com/str4d/ed25519-java), in scripts/ed25519-java
+- [bouncycastle](https://www.bouncycastle.org/), in scripts/ed25519-java
+- LibSodium, through [pynacl](https://github.com/pyca/pynacl), in scripts/pynacl_test.py
+- [npm's ed25519](https://www.npmjs.com/package/ed25519) in scripts/eddsa_test
+
+## Claimed (but feel free to steal)
+
+- ed25519-donna, by @kevinlewi
+- OpenSSL, by @valerini
+- [Pyca](https://cryptography.io/en/latest/), by @kchalkias

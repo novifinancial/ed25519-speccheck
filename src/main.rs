@@ -632,7 +632,9 @@ mod tests {
     use super::*;
     use ed25519_dalek::{PublicKey, Signature, Verifier};
     use ed25519_zebra::{Signature as ZSignature, VerificationKey as ZPublicKey};
+    use ring::signature;
     use std::convert::TryFrom;
+    use untrusted;
 
     fn unpack_test_vector_dalek(t: &TestVector) -> (PublicKey, Signature) {
         let pk = PublicKey::from_bytes(&t.pub_key[..]).unwrap();
@@ -646,6 +648,19 @@ mod tests {
         (pk, sig)
     }
 
+    fn ring_verify(t: &TestVector) -> Result<()> {
+        let pk = untrusted::Input::from(&t.pub_key[..]);
+        let sig = untrusted::Input::from(&t.signature[..]);
+        let msg = untrusted::Input::from(&t.message[..]);
+        <signature::EdDSAParameters as signature::VerificationAlgorithm>::verify(
+            &signature::ED25519,
+            pk,
+            msg,
+            sig,
+        )
+        .map_err(|_| anyhow!("signature verification failed"))
+    }
+
     #[test]
     fn test_zero_small_small() {
         let (tv1, tv2) = zero_small_small().unwrap();
@@ -655,6 +670,10 @@ mod tests {
         // only the second passes dalek's cofactorless
         assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
         assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+
+        // Same for ring's BoringSSL
+        assert!(ring_verify(&tv1).is_err());
+        assert!(ring_verify(&tv2).is_ok());
 
         let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
         let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
@@ -674,6 +693,10 @@ mod tests {
         assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
         assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
 
+        // Same for ring's BoringSSL
+        assert!(ring_verify(&tv1).is_err());
+        assert!(ring_verify(&tv2).is_ok());
+
         let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
         let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
 
@@ -692,6 +715,10 @@ mod tests {
         assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
         assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
 
+        // Same for ring's BoringSSL
+        assert!(ring_verify(&tv1).is_err());
+        assert!(ring_verify(&tv2).is_ok());
+
         let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
         let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
 
@@ -709,6 +736,10 @@ mod tests {
         // only the second passes dalek's cofactorless
         assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
         assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+
+        // Same for ring's BoringSSL
+        assert!(ring_verify(&tv1).is_err());
+        assert!(ring_verify(&tv2).is_ok());
 
         let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
         let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
@@ -731,6 +762,9 @@ mod tests {
         // dalek is cofactorless
         assert!(pk.verify(&tv.message[..], &sig).is_err());
 
+        // Same for ring's BoringSSL
+        assert!(ring_verify(&tv).is_err());
+
         let (zpk, zsig) = unpack_test_vector_zebra(&tv);
 
         // zebra is cofactored but doesn't pre-reduce
@@ -745,6 +779,9 @@ mod tests {
 
         // dalek refuses large scalars
         assert!(pk.verify(&tv.message[..], &sig).is_err());
+
+        // Same for ring's BoringSSL
+        assert!(ring_verify(&tv).is_err());
 
         let (zpk, zsig) = unpack_test_vector_zebra(&tv);
 
