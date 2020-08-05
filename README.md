@@ -41,8 +41,8 @@ TODO
 - LibSodium, through [pynacl](https://github.com/pyca/pynacl), in scripts/pynacl_test.py
 - [npm's ed25519](https://www.npmjs.com/package/ed25519) in scripts/eddsa_test
 - [Pyca](https://cryptography.io/en/latest/)
+- [OpenSSL](https://github.com/openssl/openssl) in scripts openssl_3/test_script.sh
 
 ## Claimed (but feel free to steal)
 
 - ed25519-donna, by @kevinlewi
-- OpenSSL, by @valerini
