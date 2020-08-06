@@ -41,6 +41,7 @@ TODO
 - LibSodium, through [pynacl](https://github.com/pyca/pynacl), in scripts/pynacl_test.py
 - [npm's ed25519](https://www.npmjs.com/package/ed25519) in scripts/eddsa_test
 - [Pyca](https://cryptography.io/en/latest/)
+- [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 
 
 ## Claimed (but feel free to steal)
 
