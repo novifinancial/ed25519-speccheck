@@ -42,6 +42,7 @@ TODO
 - [npm's ed25519](https://www.npmjs.com/package/ed25519) in scripts/eddsa_test
 - [Pyca](https://cryptography.io/en/latest/)
 - [OpenSSL](https://github.com/openssl/openssl) in scripts openssl_3/test_script.sh
+- [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 
 
 ## Claimed (but feel free to steal)
 
