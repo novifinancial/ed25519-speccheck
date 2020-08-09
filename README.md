@@ -32,18 +32,18 @@ TODO
 
 ## Verified libraries
 
-- [Dalek](https://github.com/dalek-cryptography/ed25519-dalek) : in unit tests,
-- [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests,
-- BoringSSL, through [Ring](https://github.com/briansmith/ring): in unit tests,
-- [Go-ed25519](https://golang.org/pkg/crypto/ed25519/), in scripts/ed25519_test.go
-- [ed25519-java](https://github.com/str4d/ed25519-java), in scripts/ed25519-java
-- [bouncycastle](https://www.bouncycastle.org/), in scripts/ed25519-java
-- LibSodium, through [pynacl](https://github.com/pyca/pynacl), in scripts/pynacl_test.py
-- [npm's ed25519](https://www.npmjs.com/package/ed25519) in scripts/eddsa_test
-- [Pyca](https://cryptography.io/en/latest/)
-- [OpenSSL](https://github.com/openssl/openssl) in scripts openssl_3/test_script.sh
-- [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3
-- [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519)
+- [Dalek](https://github.com/dalek-cryptography/ed25519-dalek) : in unit tests
+- [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests
+- BoringSSL, through [Ring](https://github.com/briansmith/ring) : in unit tests
+- [Go-ed25519](https://golang.org/pkg/crypto/ed25519/) : in scripts/ed25519_test.go
+- [ed25519-java](https://github.com/str4d/ed25519-java) : in scripts/ed25519-java
+- [bouncycastle](https://www.bouncycastle.org/) : in scripts/ed25519-java
+- LibSodium, through [pynacl](https://github.com/pyca/pynacl) : in scripts/pynacl_test.py
+- [npm's ed25519](https://www.npmjs.com/package/ed25519) : in scripts/eddsa_test
+- [Pyca](https://cryptography.io/en/latest/) using OpenSSL 1.1.1g as default backend : in scripts/pyca-openssl
+- [OpenSSL](https://github.com/openssl/openssl) : in scripts openssl_3/test_script.sh
+- [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in scripts/tweetnacl
+- [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in scripts/python-ed25519.py
 
 ## Claimed (but feel free to steal)
 
