@@ -1,5 +1,11 @@
 # ed25519-speccheck
 
+This repository generates and uses test vectors for EdDSA to check edge cases
+in the implementation of the algorithm. Namely, we test bounds checks on points
+and scalars involved in a signature, along with cofactored vs. cofactorless verification.
+
+We hope this helps outline the measures needed to implement the FIPS 186-5 and
+RFC 8022 rigorously.
 
 ## Condition table
 
@@ -19,16 +25,22 @@ Those are a few of the cases we would like to cover:
 ```
 
 Here "mixed" means with a strictly positive torsion component but not small,
-i.e. "mixed" and "small" are mutually exclusive. Besides that, we also test:
+i.e. "mixed" and "small" are mutually exclusive. Out of the eight test cases
+above, only 4 are concretely testable:
 
-- a large S > L.
+-  the 7th test vector would require a hash inversion to generate.
+- The 2nd, 3d and 5th compinations of cases cannot produce a valid signature.
+
+We test each vector in [1, 4, 6, 8] for each cofactored or cofactorless case.
+
+Besides that, we also test:
+
+- a large S > L (prepared to pass cofactorless and cofactored).
 - "pre-reduced" scalar, namely if the verification equation is
   `[8] R + [8 k] A = [8 s] B` rather than the recommended `[8] (R + k A) = [8] sB`.
+  (which passes cofactored, without pre-reduction)
 
-## Randomized batching
-
-TODO
-
+For a total of 10 test vectors.
 
 ## Verified libraries
 
@@ -48,3 +60,4 @@ TODO
 ## Claimed (but feel free to steal)
 
 - ed25519-donna, by @kevinlewi
+- ed25519 on nCipher, by Rob Starkey
