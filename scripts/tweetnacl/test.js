@@ -53,6 +53,11 @@ const tests = [
     "message": "85e241a07d148b41e47d62c63f830dc7a6851a0b1f33ae4bb2f507fb6cffec40",
     "pub_key": "442aad9f089ad9e14647b1ef9099a1ff4798d78589e66f28eca69c11f582a623",
     "signature": "e96f66be976d82e60150baecff9906684aebb1ef181f67a7189ac78ea23b6c0e547f7690a0e2ddcd04d87dbc3490dc19b3b3052f7ff0538cb68afb369ba3a514"
+  },
+  {
+      "message": "85e241a07d148b41e47d62c63f830dc7a6851a0b1f33ae4bb2f507fb6cffec40",
+      "pub_key": "442aad9f089ad9e14647b1ef9099a1ff4798d78589e66f28eca69c11f582a623",
+      "signature": "e96f66be976d82e60150baecff9906684aebb1ef181f67a7189ac78ea23b6c0e41536cedba45f025db74755f138abb2eb3b3052f7ff0538cb68afb369ba3a524"
   }
 ];
 
@@ -66,5 +71,3 @@ for (i = 0; i < tests.length; i++) {
                                       fromHexString(tests[i].pub_key));
   console.log(i + ": " + (res ? "true" : "false"));
 }
-
-
