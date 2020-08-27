@@ -16,6 +16,10 @@
 # 7: true
 # 8: false
 # 9: true
+# 10: true
+
+# import json
+
 
 def test_ours(self):
     with open('../cases.json') as f:
