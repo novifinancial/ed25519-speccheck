@@ -56,8 +56,7 @@ For a total of 10 test vectors.
 - [OpenSSL](https://github.com/openssl/openssl) : in scripts openssl_3/test_script.sh
 - [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in scripts/tweetnacl
 - [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in scripts/python-ed25519.py
+- [ed25519-donna from Signal](https://github.com/signalapp/libsignal-protocol-c.git): in scripts/ed25519-signal-donna
+- ed25519 on nCipher, by Rob Starkey
 
 ## Claimed (but feel free to steal)
-
-- ed25519-donna, by @kevinlewi
-- ed25519 on nCipher, by Rob Starkey
