@@ -626,8 +626,8 @@ fn really_large_s() -> Result<TestVector> {
     debug_assert!(a.is_canonical());
     debug_assert!(a != Scalar::zero());
     // Pick a random nonce
-    let nonce_bytes = [0u8; 32];
-    rng.fill_bytes(&mut scalar_bytes);
+    let mut nonce_bytes = [0u8; 32];
+    rng.fill_bytes(&mut nonce_bytes);
 
     // generate the r of a "normal" signature
     let pub_key = a * ED25519_BASEPOINT_POINT;
