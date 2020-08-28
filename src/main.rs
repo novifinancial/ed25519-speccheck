@@ -617,6 +617,69 @@ fn large_s() -> Result<TestVector> {
     Ok(tv)
 }
 
+fn really_large_s() -> Result<TestVector> {
+    let mut rng = new_rng();
+    // Pick a random scalar
+    let mut scalar_bytes = [0u8; 32];
+    rng.fill_bytes(&mut scalar_bytes);
+    let a = Scalar::from_bytes_mod_order(scalar_bytes);
+    debug_assert!(a.is_canonical());
+    debug_assert!(a != Scalar::zero());
+    // Pick a random nonce
+    let mut nonce_bytes = [0u8; 32];
+    rng.fill_bytes(&mut nonce_bytes);
+
+    // generate the r of a "normal" signature
+    let pub_key = a * ED25519_BASEPOINT_POINT;
+
+    let mut message = [0u8; 32];
+    rng.fill_bytes(&mut message);
+    let mut h = Sha512::new();
+    h.update(&nonce_bytes);
+    h.update(&message);
+
+    let mut output = [0u8; 64];
+    output.copy_from_slice(h.finalize().as_slice());
+    let r_scalar = curve25519_dalek::scalar::Scalar::from_bytes_mod_order_wide(&output);
+
+    let r = r_scalar * ED25519_BASEPOINT_POINT;
+
+    let s = r_scalar + compute_hram(&message, &pub_key, &r) * a;
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
+
+    let mut s_nonreducing = Scalar52::from_bytes(&s.to_bytes());
+    // perform the incomplete higher-bits check often used in place of s<L
+    while (s_nonreducing.to_bytes()[31] as u8 & 224u8) == 0u8 {
+        s_nonreducing = Scalar52::add(&s_nonreducing, &non_reducing_scalar52::L);
+    }
+    let s_prime_bytes = s_nonreducing.to_bytes();
+
+    // using deserialize_scalar is key here, we use `from_bits` to represent
+    // the scalar
+    let s_prime = deserialize_scalar(&s_prime_bytes)?;
+
+    debug_assert!(s != s_prime);
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s_prime)).is_ok());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s_prime)).is_ok());
+
+    println!(
+        "S much larger than L, large order A, large order R\n\
+         passes cofactored, passes  cofactorless, often excluded from both due to high bit checks, breaks strong unforgeability\n\
+         message: {}, pub_key: {}, signature: {}",
+        hex::encode(&message),
+        hex::encode(&pub_key.compress().as_bytes()),
+        hex::encode(&serialize_signature(&r, &s_prime))
+    );
+    let tv = TestVector {
+        message,
+        pub_key: pub_key.compress().to_bytes(),
+        signature: serialize_signature(&r, &s_prime),
+    };
+
+    Ok(tv)
+}
+
 fn main() -> Result<()> {
     zero_small_small()?;
     non_zero_mixed_small()?;
@@ -624,6 +687,7 @@ fn main() -> Result<()> {
     non_zero_mixed_mixed()?;
     pre_reduced_scalar()?;
     large_s()?;
+    really_large_s()?;
     Ok(())
 }
 
@@ -781,6 +845,22 @@ mod tests {
         assert!(pk.verify(&tv.message[..], &sig).is_err());
 
         // Same for ring's BoringSSL
+        assert!(ring_verify(&tv).is_err());
+
+        let (zpk, zsig) = unpack_test_vector_zebra(&tv);
+
+        // zebra also refuses large scalars
+        assert!(zpk.verify(&zsig, &tv.message[..]).is_err());
+    }
+
+    #[test]
+    fn test_really_large_s() {
+        let tv = really_large_s().unwrap();
+
+        // dalek refuses to deserialize really large scalars
+        assert!(Signature::try_from(&tv.signature[..]).is_err());
+
+        // Signature rejection for ring's BoringSSL
         assert!(ring_verify(&tv).is_err());
 
         let (zpk, zsig) = unpack_test_vector_zebra(&tv);

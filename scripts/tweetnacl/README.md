@@ -13,5 +13,6 @@ Output
 7: true
 8: false
 9: true
+10: true
 
 Case 9 is interesting as it shows the violation of `S <= L` requirement for a valid signature.
