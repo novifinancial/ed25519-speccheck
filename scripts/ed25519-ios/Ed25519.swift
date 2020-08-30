@@ -106,6 +106,20 @@ verifySignature(
   signature: "e96f66be976d82e60150baecff9906684aebb1ef181f67a7189ac78ea23b6c0e547f7690a0e2ddcd04d87dbc3490dc19b3b3052f7ff0538cb68afb369ba3a514"
 )
 
+verifySignature(
+  index: 10,
+  message: "fdaebc429f4a735932a160da1301080c13280eea8bc280d1b392c6b9e6ba3a5a",
+  pubKey: "f7badec5b8abeaf699583992219b7b223f1df3fbbea919844e3f7c554a43dd43",
+  signature: "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f084d5b99c2a9463d9c8bd5026916996984eeec87ddf1d3be329006ace1b37b09"
+)
+
+verifySignature(
+  index: 11,
+  message: "84b698d39be126ff55fe45079e6c8bf64a0d7db6994560b4e96b7021eb39c1a1",
+  pubKey: "f7badec5b8abeaf699583992219b7b223f1df3fbbea919844e3f7c554a43dd43",
+  signature: "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f084d5b99c2a9463d9c8bd5026916996984eeec87ddf1d3be329006ace1b37b09"
+)
+
 
 //Output
 //
@@ -119,3 +133,5 @@ verifySignature(
 //case 7, true
 //case 8, false
 //case 9, false
+//case 10, false
+//case 11, false

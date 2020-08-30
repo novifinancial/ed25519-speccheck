@@ -58,6 +58,16 @@ const tests = [
       "message": "85e241a07d148b41e47d62c63f830dc7a6851a0b1f33ae4bb2f507fb6cffec40",
       "pub_key": "442aad9f089ad9e14647b1ef9099a1ff4798d78589e66f28eca69c11f582a623",
       "signature": "8ce5b96c8f26d0ab6c47958c9e68b937104cd36e13c33566acd2fe8d38aa19427e71f98a473474f2f13f06f97c20d58cc3f54b8bd0d272f42b695dd7e89a8c22"
+  },
+  {
+      "message": "fdaebc429f4a735932a160da1301080c13280eea8bc280d1b392c6b9e6ba3a5a",
+      "pub_key": "f7badec5b8abeaf699583992219b7b223f1df3fbbea919844e3f7c554a43dd43",
+      "signature": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f454d370c8d9fc323a41450f8d513eafeb5b0697390c1e505a0d4ddc71f566607"
+  },
+  {
+    "message": "84b698d39be126ff55fe45079e6c8bf64a0d7db6994560b4e96b7021eb39c1a1",
+    "pub_key": "f7badec5b8abeaf699583992219b7b223f1df3fbbea919844e3f7c554a43dd43",
+    "signature": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f084d5b99c2a9463d9c8bd5026916996984eeec87ddf1d3be329006ace1b37b09"
   }
 ];
 
