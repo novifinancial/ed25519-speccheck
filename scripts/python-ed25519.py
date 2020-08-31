@@ -17,6 +17,8 @@
 # 8: false
 # 9: true
 # 10: true
+# 11: false
+# 12: false
 
 # import json
 
@@ -24,7 +26,7 @@
 def test_ours(self):
     with open('../cases.json') as f:
         data = json.load(f)
-        print('')
+        print('File loaded')
     for i, test_case in enumerate(data):
         try:
             pub_key = ed25519.VerifyingKey(bytes.fromhex(test_case['pub_key']))

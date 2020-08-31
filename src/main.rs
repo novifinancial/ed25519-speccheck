@@ -22,7 +22,7 @@ const EIGHT_TORSION: [[u8; 32]; 8] = [
     [
         1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
-    ],
+    ], // (0,1), order 1, neutral element
     [
         199, 23, 106, 112, 61, 77, 216, 79, 186, 60, 11, 118, 13, 16, 103, 15, 42, 32, 83, 250, 44,
         57, 204, 198, 78, 199, 253, 119, 146, 172, 3, 122,
@@ -114,6 +114,18 @@ fn serialize_signature(r: &EdwardsPoint, s: &Scalar) -> Vec<u8> {
 fn compute_hram(message: &[u8], pub_key: &EdwardsPoint, signature_r: &EdwardsPoint) -> Scalar {
     let k_bytes = Sha512::default()
         .chain(&signature_r.compress().as_bytes())
+        .chain(&pub_key.compress().as_bytes()[..])
+        .chain(&message);
+    // curve25519_dalek is stuck on an old digest version, so we can't do
+    // Scalar::from_hash
+    let mut k_output = [0u8; 64];
+    k_output.copy_from_slice(k_bytes.finalize().as_slice());
+    Scalar::from_bytes_mod_order_wide(&k_output)
+}
+
+fn compute_hram_with_r_array(message: &[u8], pub_key: &EdwardsPoint, signature_r: &[u8]) -> Scalar {
+    let k_bytes = Sha512::default()
+        .chain(&signature_r)
         .chain(&pub_key.compress().as_bytes()[..])
         .chain(&message);
     // curve25519_dalek is stuck on an old digest version, so we can't do
@@ -680,6 +692,85 @@ fn really_large_s() -> Result<TestVector> {
     Ok(tv)
 }
 
+// Libraries that reject non-canonical encodings of R would reject both vectors
+// Libraries that accept the first vector, but reject the second reduce the R prior to hashing.
+// Libraries that reject the first vector, but accept the second do not reduce the R prior to hashing.
+pub fn non_zero_small_mixed_non_canonical() -> Result<(TestVector, TestVector)> {
+    let mut rng = new_rng();
+    // Pick a random scalar
+    let mut scalar_bytes = [0u8; 32];
+    rng.fill_bytes(&mut scalar_bytes);
+    let a = Scalar::from_bytes_mod_order(scalar_bytes);
+    debug_assert!(a.is_canonical());
+    debug_assert!(a != Scalar::zero());
+
+    let pub_key_component = a * ED25519_BASEPOINT_POINT;
+
+    // Pick a torsion point of order 4, EIGHT_TORSION[2] or EIGHT_TORSION[6],
+    // we pick the second
+    let r_arr = [
+        237, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127,
+    ];
+    let r = deserialize_point(&r_arr).unwrap();
+    // let r = pick_small_nonzero_point(5); // (x, y) = (0 sign, 0) where .y += 2^255-19
+
+    let small_idx: usize = rng.next_u64() as usize;
+    let r2 = pick_small_nonzero_point(small_idx + 1);
+    let pub_key = pub_key_component + r2.neg();
+
+    let mut message = [0u8; 32];
+    rng.fill_bytes(&mut message);
+
+    // reduces r prior to serializing into the hash input
+    while !(r + compute_hram(&message, &pub_key, &r) * r2.neg()).is_identity() {
+        rng.fill_bytes(&mut message);
+    }
+    let s = compute_hram(&message, &pub_key, &r) * a;
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
+    let mut signature = serialize_signature(&r, &s);
+    signature[..32].clone_from_slice(&r_arr[..32]);
+    println!(
+        "S > 0, mixed A, small non-canonical R\n\
+         passes cofactored, passes cofactorless, leaks private key\n\
+         message: {}, pub_key: {}, signature: {}",
+        hex::encode(&message),
+        hex::encode(&pub_key.compress().as_bytes()),
+        hex::encode(&signature)
+    );
+    let tv1 = TestVector {
+        message,
+        pub_key: pub_key.compress().to_bytes(),
+        signature,
+    };
+
+    // does not reduce r prior to serializing into the hash input
+    while !(r + compute_hram_with_r_array(&message, &pub_key, &r_arr) * r2.neg()).is_identity() {
+        rng.fill_bytes(&mut message);
+    }
+    let s = compute_hram_with_r_array(&message, &pub_key, &r_arr) * a;
+    // debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
+    // debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
+    let mut signature = serialize_signature(&r, &s);
+    signature[..32].clone_from_slice(&r_arr[..32]);
+    println!(
+        "S > 0, mixed A, small non-canonical R\n\
+         passes cofactored, passes cofactorless, leaks private key\n\
+         message: {}, pub_key: {}, signature: {}",
+        hex::encode(&message),
+        hex::encode(&pub_key.compress().as_bytes()),
+        hex::encode(&signature)
+    );
+    let tv2 = TestVector {
+        message,
+        pub_key: pub_key.compress().to_bytes(),
+        signature,
+    };
+
+    Ok((tv1, tv2))
+}
+
 fn main() -> Result<()> {
     zero_small_small()?;
     non_zero_mixed_small()?;
@@ -688,6 +779,7 @@ fn main() -> Result<()> {
     pre_reduced_scalar()?;
     large_s()?;
     really_large_s()?;
+    non_zero_small_mixed_non_canonical()?;
     Ok(())
 }
 
@@ -867,5 +959,36 @@ mod tests {
 
         // zebra also refuses large scalars
         assert!(zpk.verify(&zsig, &tv.message[..]).is_err());
+    }
+
+    #[test]
+    fn test_non_canonical_r() {
+        let (tv1, tv2) = non_zero_small_mixed_non_canonical().unwrap();
+        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
+        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
+
+        // only the second passes dalek's cofactorless
+        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
+        assert!(pk2.verify(&tv2.message[..], &sig2).is_err());
+
+        println!(
+            "Error from dalek: {:?}",
+            pk1.verify(&tv1.message[..], &sig1)
+        );
+        println!(
+            "Error from dalek: {:?}",
+            pk1.verify(&tv1.message[..], &sig2)
+        );
+
+        // Same for ring's BoringSSL
+        assert!(ring_verify(&tv1).is_err());
+        assert!(ring_verify(&tv2).is_err());
+
+        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
+        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
+
+        // both pass zebra's cofactored
+        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_err());
+        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
     }
 }
