@@ -1,0 +1,11 @@
+--- libsodium-stable/src/libsodium/crypto_sign/ed25519/ref10/sign_ed25519_ref10.h	2020-08-16 02:41:54.000000000 -0700
++++ libsodium-stable/src/libsodium/crypto_sign/ed25519/ref10/sign_ed25519_ref10_new.h	2020-09-09 14:45:22.000000000 -0700
+@@ -1,6 +1,8 @@
+ #ifndef sign_ed25519_ref10_H
+ #define sign_ed25519_ref10_H
+ 
++#define ED25519_COMPAT
++
+ void _crypto_sign_ed25519_ref10_hinit(crypto_hash_sha512_state *hs,
+                                       int prehashed);
+ 

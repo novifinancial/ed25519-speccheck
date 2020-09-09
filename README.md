@@ -12,16 +12,19 @@ RFC 8022 rigorously.
 Those are a few of the cases we would like to cover:
 
 ```
-| | parameters              | cofactored        | cofactorless                     | comment                               |
-|-+-------------------------+-------------------+----------------------------------+---------------------------------------|
-|1| S = 0, R small, A small | always passes     | R = -k×A                         | see ed25519's verify_strict           |
-|2| S > 0, R small, A small | always fails      | always fails                     | no large order component on the right |
-|3| S = 0, R mixed, A small | always fails      | always fails                     | no large order component on the left  |
-|4| S > 0, R mixed, A small | 8×S×B = 8×R       | 8×S×B = 8×R ∧ L×R = -L×k×A       | [*]                                   |
-|5| S = 0, R small, A mixed | always fails      | always fails                     | no large order component on the left  |
-|6| S > 0, R small, A mixed | 8×S×B = 8×k×A     | 8×S×B = 8×k×A ∧ L×R = -L×k×A     | symmetric of [*]                      |
-|7| S = 0, R mixed, A mixed | 8×R = -8×k×A      | R = -k×A                         | hard to test (req. hash inversion)    |
-|8| S > 0, R mixed, A mixed | 8×S×B = 8×R+8×k×A | 8×S×B = 8×R+8×k×A ∧ L×R = -L×k×A |                                       |
+|  | parameters              | cofactored        | cofactorless                     | comment                               |
+|--+-------------------------+-------------------+----------------------------------+---------------------------------------|
+| 1| S = 0, R small, A small | always passes     | R = -k×A                         | see ed25519's verify_strict           |
+| 2| S > 0, R small, A small | always fails      | always fails                     | no large order component on the right |
+| 3| S = 0, R mixed, A small | always fails      | always fails                     | no large order component on the left  |
+| 4| S > 0, R mixed, A small | 8×S×B = 8×R       | 8×S×B = 8×R ∧ L×R = -L×k×A       | [*]                                   |
+| 5| S = 0, R small, A mixed | always fails      | always fails                     | no large order component on the left  |
+| 6| S > 0, R small, A mixed | 8×S×B = 8×k×A     | 8×S×B = 8×k×A ∧ L×R = -L×k×A     | symmetric of [*]                      |
+| 7| S = 0, R mixed, A mixed | 8×R = -8×k×A      | R = -k×A                         | hard to test (req. hash inversion)    |
+| 8| S > 0, R mixed, A mixed | 8×S×B = 8×R+8×k×A | 8×S×B = 8×R+8×k×A ∧ L×R = -L×k×A |                                       |
+| 9| S > L                   | always passes     | always passes                    |                                       |
+|10| R non-canonical, small  | always passes     | always passes                    |                                       |
+|11| A non-canonical, small  | always passes     | always passes                    |                                       |
 ```
 
 Here "mixed" means with a strictly positive torsion component but not small,
@@ -58,5 +61,46 @@ For a total of 10 test vectors.
 - [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in scripts/python-ed25519.py
 - [ed25519-donna from Signal](https://github.com/signalapp/libsignal-protocol-c.git): in scripts/ed25519-signal-donna
 - ed25519 on nCipher, by Rob Starkey
+
+## Results
+
+```
+┌---------------------------------------------------------------------------┐
+|Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11| 12| 13| 14|
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|BoringSSL      | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|BouncyCastle   | X | V | X | V | X | V | V | X | X | X | X | X | X | X | X |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|CryptoKit      | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|Dalek          | X | V | X | V | X | V | V | X | X | X | V | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|ed25519-donna  | X | V | X | V | X | V | V | X | X | V | X | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|ed25519-java   | X | V | X | V | X | V | V | X | X | V | V | X | X | V | X |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|Go             | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|libra-crypto   | X | X | X | X | X | X | V | X | X | X | X | X | X | X | X |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|LibSodium      | X | X | X | X | X | X | V | X | X | X | X | X | X | X | X |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|npm            | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|OpenSSL-3.0    | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|PyCA           | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|python-ed25519 | X | V | X | V | X | V | V | X | X | V | V | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|ref10          | X | V | X | V | X | V | V | X | X | V | X | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|TweetNaCl-js   | X | V | X | V | X | V | V | X | X | V | V | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|Zebra          | V | V | V | V | V | V | V | V | V | X | X | X | V | V | V |
+└---------------------------------------------------------------------------┘
+
+```
 
 ## Claimed (but feel free to steal)

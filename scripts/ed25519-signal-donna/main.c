@@ -46,9 +46,9 @@ int curvesigs_cofac(int silent)
 
     FILE *fp;
     char buff[255];
-    fp = fopen("test_vector.txt", "r");
+    fp = fopen("../../../cases.txt", "r");
     fscanf(fp, "%i", &num_test_vectors);
-    printf("number of test vectors: %i\n", num_test_vectors);
+    printf("\n|ed25519-donna  |");
 
     for (int i = 0; i < num_test_vectors; i++) {
         memset(pubkey, 0, 32);
@@ -57,14 +57,12 @@ int curvesigs_cofac(int silent)
         memset(verifybuf, 0, 32+64);
         memset(verifybuf2, 0, 32+64);
 
-
         fscanf(fp, "%s", buff);
         hex_string_to_byte_array(buff + 4, 32, msg);
         fscanf(fp, "%s", buff);
         hex_string_to_byte_array(buff + 4, 32, pubkey);
         fscanf(fp, "%s", buff);
         hex_string_to_byte_array(buff + 4, 64, signature);
-        printf("Curvesig verify #%d : ",i);
 //      printf("msg:")
 //      pprint(msg);
 //      printf("Verification:");
@@ -77,11 +75,12 @@ int curvesigs_cofac(int silent)
         memmove(verifybuf, signature, 64);
         memmove(verifybuf+64, msg, 32);
         if (crypto_sign_open_modified(verifybuf2, verifybuf, 64 + 32, pubkey) == 0) {
-            printf("PASS\n");
+          printf(" V |");
         } else {
-            printf("FAIL\n");
+          printf(" X |");
         }
     }
+    printf("\n");
     return 0;
 }
 int main(void) {
