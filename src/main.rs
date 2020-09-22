@@ -787,8 +787,8 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<(TestVector, TestVector)> 
         rng.fill_bytes(&mut message);
     }
     let s = compute_hram_with_r_array(&message, &pub_key, &r_arr) * a;
-    // debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
-    // debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_err());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
     let mut signature = serialize_signature(&r, &s);
     signature[..32].clone_from_slice(&r_arr[..32]);
     debug!(
@@ -845,8 +845,8 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<(TestVector, TestVector)> 
     {
         rng.fill_bytes(&mut message);
     }
-    // debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
-    // debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
     debug!(
         "S > 0, negative-zero non-canonical A, mixed R\n\
          passes cofactored, passes cofactorless, repudiable\n\
@@ -869,8 +869,8 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<(TestVector, TestVector)> 
     {
         rng.fill_bytes(&mut message);
     }
-    // debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
-    // debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
     debug!(
         "S > 0, negative-zero non-canonical A, mixed R\n\
          passes cofactored, passes cofactorless, repudiable\n\
