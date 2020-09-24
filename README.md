@@ -7,24 +7,27 @@ and scalars involved in a signature, along with cofactored vs. cofactorless veri
 We hope this helps outline the measures needed to implement the FIPS 186-5 and
 RFC 8022 rigorously.
 
+You can run this utility with `RUST_LOG=debug cargo run` to get a list of the
+test vectors and their inteded test conditions.
+
 ## Condition table
 
 Those are a few of the cases we would like to cover:
 
 ```
-|  | parameters              | cofactored        | cofactorless                     | comment                               |
+n|  | parameters              | cofactored        | cofactorless                     | comment                               |
 |--+-------------------------+-------------------+----------------------------------+---------------------------------------|
-| 1| S = 0, R small, A small | always passes     | R = -k×A                         | see ed25519's verify_strict           |
-| 2| S > 0, R small, A small | always fails      | always fails                     | no large order component on the right |
-| 3| S = 0, R mixed, A small | always fails      | always fails                     | no large order component on the left  |
-| 4| S > 0, R mixed, A small | 8×S×B = 8×R       | 8×S×B = 8×R ∧ L×R = -L×k×A       | [*]                                   |
-| 5| S = 0, R small, A mixed | always fails      | always fails                     | no large order component on the left  |
-| 6| S > 0, R small, A mixed | 8×S×B = 8×k×A     | 8×S×B = 8×k×A ∧ L×R = -L×k×A     | symmetric of [*]                      |
-| 7| S = 0, R mixed, A mixed | 8×R = -8×k×A      | R = -k×A                         | hard to test (req. hash inversion)    |
-| 8| S > 0, R mixed, A mixed | 8×S×B = 8×R+8×k×A | 8×S×B = 8×R+8×k×A ∧ L×R = -L×k×A |                                       |
-| 9| S > L                   | always passes     | always passes                    |                                       |
-|10| R non-canonical, small  | always passes     | always passes                    |                                       |
-|11| A non-canonical, small  | always passes     | always passes                    |                                       |
+| 0| S = 0, R small, A small | always passes     | R = -k×A                         | see ed25519's verify_strict           |
+| 1| S > 0, R small, A small | always fails      | always fails                     | no large order component on the right |
+| 2| S = 0, R mixed, A small | always fails      | always fails                     | no large order component on the left  |
+| 3| S > 0, R mixed, A small | 8×S×B = 8×R       | 8×S×B = 8×R ∧ L×R = -L×k×A       | [*]                                   |
+| 4| S = 0, R small, A mixed | always fails      | always fails                     | no large order component on the left  |
+| 5| S > 0, R small, A mixed | 8×S×B = 8×k×A     | 8×S×B = 8×k×A ∧ L×R = -L×k×A     | symmetric of [*]                      |
+| 6| S = 0, R mixed, A mixed | 8×R = -8×k×A      | R = -k×A                         | hard to test (req. hash inversion)    |
+| 7| S > 0, R mixed, A mixed | 8×S×B = 8×R+8×k×A | 8×S×B = 8×R+8×k×A ∧ L×R = -L×k×A |                                       |
+| 8| S > L                   | always passes     | always passes                    |                                       |
+| 9| R non-canonical, small  | always passes     | always passes                    |                                       |
+|10| A non-canonical, small  | always passes     | always passes                    |                                       |
 ```
 
 Here "mixed" means with a strictly positive torsion component but not small,
@@ -42,8 +45,9 @@ Besides that, we also test:
 - "pre-reduced" scalar, namely if the verification equation is
   `[8] R + [8 k] A = [8 s] B` rather than the recommended `[8] (R + k A) = [8] sB`.
   (which passes cofactored, without pre-reduction)
+- a negative zero point in A
 
-For a total of 10 test vectors.
+For a total of 15 test vectors.
 
 ## Verified libraries
 
@@ -102,5 +106,3 @@ For a total of 10 test vectors.
 └---------------------------------------------------------------------------┘
 
 ```
-
-## Claimed (but feel free to steal)
