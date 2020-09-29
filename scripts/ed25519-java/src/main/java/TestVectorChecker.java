@@ -18,23 +18,32 @@ public class TestVectorChecker {
     // 8: false
     // 9: true
     public static void main(String[] args) throws FileNotFoundException {
-        String jsonFilename = "ed25519_edge_cases_test_vector.json";
+        String jsonFilename = "../../cases.json";
         JsonReader reader = new JsonReader(new FileReader(jsonFilename));
         Ed25519TestCase[] testCases = new Gson().fromJson(reader, Ed25519TestCase[].class);
 
         // For i2p ed25519-java
-        System.out.println("--- i2p OUTPUT ---");
+        System.out.print("|ed25519-java   |");
         int index = 0;
         for (Ed25519TestCase testCase : testCases) {
-            System.out.println(index++ + ": " + testCase.verify_i2p());
+            if (testCase.verify_i2p()) {
+                System.out.print(" V |");
+            } else {
+                System.out.print(" X |");
+            }
         }
         System.out.println("");
 
         // For BC ed25519
-        System.out.println("--- BC OUTPUT ---");
+        System.out.print("|BouncyCastle   |");
         index = 0;
         for (Ed25519TestCase testCase : testCases) {
-            System.out.println(index++ + ": " + testCase.verify_bc());
+            if (testCase.verify_bc()) {
+                System.out.print(" V |");
+            } else {
+                System.out.print(" X |");
+            }
         }
+        System.out.println("");
     }
 }

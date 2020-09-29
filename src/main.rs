@@ -7,6 +7,13 @@ use curve25519_dalek::{
 use rand::{rngs::StdRng, RngCore, SeedableRng};
 use sha2::{Digest, Sha512};
 
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+use std::fs::File;
+use std::io::prelude::*;
+
+#[macro_use]
+extern crate log;
+
 // The 8-torsion subgroup E[8].
 //
 // In the case of Curve25519, it is cyclic; the i-th element of
@@ -135,6 +142,22 @@ fn compute_hram_with_r_array(message: &[u8], pub_key: &EdwardsPoint, signature_r
     Scalar::from_bytes_mod_order_wide(&k_output)
 }
 
+fn compute_hram_with_pk_array(
+    message: &[u8],
+    pub_key_arr: &[u8],
+    signature_r: &EdwardsPoint,
+) -> Scalar {
+    let k_bytes = Sha512::default()
+        .chain(&signature_r.compress().as_bytes())
+        .chain(&pub_key_arr)
+        .chain(&message);
+    // curve25519_dalek is stuck on an old digest version, so we can't do
+    // Scalar::from_hash
+    let mut k_output = [0u8; 64];
+    k_output.copy_from_slice(k_bytes.finalize().as_slice());
+    Scalar::from_bytes_mod_order_wide(&k_output)
+}
+
 fn verify_cofactored(
     message: &[u8],
     pub_key: &EdwardsPoint,
@@ -229,6 +252,19 @@ pub struct TestVector {
     signature: Vec<u8>,
 }
 
+impl Serialize for TestVector {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Color", 3)?;
+        state.serialize_field("message", &hex::encode(&self.message))?;
+        state.serialize_field("pub_key", &hex::encode(&self.pub_key))?;
+        state.serialize_field("signature", &hex::encode(&self.signature))?;
+        state.end()
+    }
+}
+
 fn new_rng() -> impl RngCore {
     let mut pi_bytes = [0u8; 32];
     for i in 0..4 {
@@ -257,10 +293,10 @@ pub fn zero_small_small() -> Result<(TestVector, TestVector), anyhow::Error> {
     }
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
-    println!(
+    debug!(
         "S=0, small A, small R\n\
              passes cofactored, fails cofactorless, repudiable\n\
-             message: {}, pub_key: {}, signature: {}",
+             \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
@@ -278,10 +314,10 @@ pub fn zero_small_small() -> Result<(TestVector, TestVector), anyhow::Error> {
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
 
-    println!(
+    debug!(
         "S=0, small A, small R\n\
          passes cofactored, passes cofactorless, repudiable\n\
-         message: {}, pub_key: {}, signature: {}",
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
@@ -319,10 +355,10 @@ pub fn non_zero_mixed_small() -> Result<(TestVector, TestVector)> {
     }
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
-    println!(
+    debug!(
         "S > 0, small A, mixed R\n\
              passes cofactored, fails cofactorless, repudiable\n\
-             message: {}, pub_key: {}, signature: {}",
+             \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
@@ -338,10 +374,10 @@ pub fn non_zero_mixed_small() -> Result<(TestVector, TestVector)> {
     }
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
-    println!(
+    debug!(
         "S > 0, small A, mixed R\n\
          passes cofactored, passes cofactorless, repudiable\n\
-         message: {}, pub_key: {}, signature: {}",
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
@@ -381,10 +417,10 @@ pub fn non_zero_small_mixed() -> Result<(TestVector, TestVector)> {
     let s = compute_hram(&message, &pub_key, &r) * a;
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
-    println!(
+    debug!(
         "S > 0, mixed A, small R\n\
              passes cofactored, fails cofactorless, leaks private key\n\
-             message: {}, pub_key: {}, signature: {}",
+             \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
@@ -402,10 +438,10 @@ pub fn non_zero_small_mixed() -> Result<(TestVector, TestVector)> {
     let s = compute_hram(&message, &pub_key, &r) * a;
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
-    println!(
+    debug!(
         "S > 0, mixed A, small R\n\
          passes cofactored, passes cofactorless, leaks private key\n\
-         message: {}, pub_key: {}, signature: {}",
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
@@ -457,10 +493,10 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
     let s = prelim_r + compute_hram(&message, &pub_key, &r) * a;
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
-    println!(
+    debug!(
         "S > 0, mixed A, mixed R\n\
              passes cofactored, fails cofactorless\n\
-             message: {}, pub_key: {}, signature: {}",
+             \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
@@ -487,10 +523,10 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
     let s = prelim_r + compute_hram(&message, &pub_key, &r) * a;
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
-    println!(
+    debug!(
         "S > 0, mixed A, mixed R\n\
          passes cofactored, passes cofactorless\n\
-         message: {}, pub_key: {}, signature: {}",
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
@@ -552,10 +588,10 @@ fn pre_reduced_scalar() -> Result<TestVector> {
 
     // as expected
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
-    println!(
+    debug!(
         "S > 0, mixed A, large order R\n\
          passes cofactored, fails pre-reducing cofactored, fails cofactorless\n\
-         message: {}, pub_key: {}, signature: {}",
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
@@ -612,10 +648,10 @@ fn large_s() -> Result<TestVector> {
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s_prime)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s_prime)).is_ok());
 
-    println!(
+    debug!(
         "S > L, large order A, large order R\n\
          passes cofactored, passes  cofactorless, often excluded from both, breaks strong unforgeability\n\
-         message: {}, pub_key: {}, signature: {}",
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s_prime))
@@ -675,10 +711,10 @@ fn really_large_s() -> Result<TestVector> {
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s_prime)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s_prime)).is_ok());
 
-    println!(
+    debug!(
         "S much larger than L, large order A, large order R\n\
          passes cofactored, passes  cofactorless, often excluded from both due to high bit checks, breaks strong unforgeability\n\
-         message: {}, pub_key: {}, signature: {}",
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s_prime))
@@ -692,10 +728,12 @@ fn really_large_s() -> Result<TestVector> {
     Ok(tv)
 }
 
-// Libraries that reject non-canonical encodings of R would reject both vectors
+// This test vector has R of order 4 in non-canonical form, serialialized as EDFFFF..FFFF.
+// Libraries that reject non-canonical encodings of R would reject both vectors.
 // Libraries that accept the first vector, but reject the second reduce the R prior to hashing.
 // Libraries that reject the first vector, but accept the second do not reduce the R prior to hashing.
-pub fn non_zero_small_mixed_non_canonical() -> Result<(TestVector, TestVector)> {
+// Both vectors pass cofactored and cofactorless verification.
+pub fn non_zero_small_non_canonical_mixed() -> Result<(TestVector, TestVector)> {
     let mut rng = new_rng();
     // Pick a random scalar
     let mut scalar_bytes = [0u8; 32];
@@ -706,14 +744,13 @@ pub fn non_zero_small_mixed_non_canonical() -> Result<(TestVector, TestVector)> 
 
     let pub_key_component = a * ED25519_BASEPOINT_POINT;
 
-    // Pick a torsion point of order 4, EIGHT_TORSION[2] or EIGHT_TORSION[6],
-    // we pick the second
     let r_arr = [
-        237, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127,
+        // non-canonically serialized point EIGHT_TORSION[6]
+        // of order 4
+        236, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     ];
     let r = deserialize_point(&r_arr).unwrap();
-    // let r = pick_small_nonzero_point(5); // (x, y) = (0 sign, 0) where .y += 2^255-19
 
     let small_idx: usize = rng.next_u64() as usize;
     let r2 = pick_small_nonzero_point(small_idx + 1);
@@ -731,10 +768,10 @@ pub fn non_zero_small_mixed_non_canonical() -> Result<(TestVector, TestVector)> 
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
     let mut signature = serialize_signature(&r, &s);
     signature[..32].clone_from_slice(&r_arr[..32]);
-    println!(
+    debug!(
         "S > 0, mixed A, small non-canonical R\n\
          passes cofactored, passes cofactorless, leaks private key\n\
-         message: {}, pub_key: {}, signature: {}",
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&signature)
@@ -750,14 +787,14 @@ pub fn non_zero_small_mixed_non_canonical() -> Result<(TestVector, TestVector)> 
         rng.fill_bytes(&mut message);
     }
     let s = compute_hram_with_r_array(&message, &pub_key, &r_arr) * a;
-    // debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
-    // debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_err());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
     let mut signature = serialize_signature(&r, &s);
     signature[..32].clone_from_slice(&r_arr[..32]);
-    println!(
+    debug!(
         "S > 0, mixed A, small non-canonical R\n\
          passes cofactored, passes cofactorless, leaks private key\n\
-         message: {}, pub_key: {}, signature: {}",
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
         hex::encode(&message),
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&signature)
@@ -771,15 +808,151 @@ pub fn non_zero_small_mixed_non_canonical() -> Result<(TestVector, TestVector)> 
     Ok((tv1, tv2))
 }
 
+// This test vector has A of order 4 in non-canonical form, serialialized as EDFFFF..FFFF.
+// Libraries that reject non-canonical encodings of A would reject both vectors.
+// Libraries that accept the first vector, but reject the second reduce the A prior to hashing.
+// Libraries that reject the first vector, but accept the second do not reduce the A prior to hashing.
+// Both vectors pass cofactored and cofactorless verification.
+pub fn non_zero_mixed_small_non_canonical() -> Result<(TestVector, TestVector)> {
+    let mut rng = new_rng();
+    // Pick a random Scalar
+    let mut scalar_bytes = [0u8; 32];
+    rng.fill_bytes(&mut scalar_bytes);
+    let s = Scalar::from_bytes_mod_order(scalar_bytes);
+    debug_assert!(s.is_canonical());
+    debug_assert!(s != Scalar::zero());
+
+    let r0 = s * ED25519_BASEPOINT_POINT;
+
+    // Pick a torsion point
+    let pub_key_arr = [
+        // non-canonically serialized point EIGHT_TORSION[6]
+        // of order 4
+        236, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    ];
+    let pub_key = deserialize_point(&pub_key_arr).unwrap();
+
+    let r = r0 + pub_key.neg();
+
+    let mut message = [0u8; 32];
+    rng.fill_bytes(&mut message);
+
+    // succeeds when public key is reserialized
+    while !(pub_key.neg() + compute_hram(&message, &pub_key, &r) * pub_key).is_identity()
+        || (pub_key.neg() + compute_hram_with_pk_array(&message, &pub_key_arr, &r) * pub_key)
+            .is_identity()
+    {
+        rng.fill_bytes(&mut message);
+    }
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
+    debug!(
+        "S > 0, negative-zero non-canonical A, mixed R\n\
+         passes cofactored, passes cofactorless, repudiable\n\
+         reserializes A\n\
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
+        hex::encode(&message),
+        hex::encode(&pub_key.compress().as_bytes()),
+        hex::encode(&serialize_signature(&r, &s))
+    );
+    let tv1 = TestVector {
+        message,
+        pub_key: pub_key_arr,
+        signature: serialize_signature(&r, &s),
+    };
+
+    // succeeds when public key is not-reserialized
+    while !(pub_key.neg() + compute_hram_with_pk_array(&message, &pub_key_arr, &r) * pub_key)
+        .is_identity()
+        || (pub_key.neg() + compute_hram(&message, &pub_key, &r) * pub_key).is_identity()
+    {
+        rng.fill_bytes(&mut message);
+    }
+    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
+    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
+    debug!(
+        "S > 0, negative-zero non-canonical A, mixed R\n\
+         passes cofactored, passes cofactorless, repudiable\n\
+         does not reserialize A\n\
+         \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
+        hex::encode(&message),
+        hex::encode(&pub_key.compress().as_bytes()),
+        hex::encode(&serialize_signature(&r, &s))
+    );
+    let tv2 = TestVector {
+        message,
+        pub_key: pub_key_arr,
+        signature: serialize_signature(&r, &s),
+    };
+
+    Ok((tv1, tv2))
+}
+
+fn generate_test_vectors() -> Result<Vec<TestVector>> {
+    // #0-1: canonical S, small R, small A
+    let mut vec = Vec::new();
+    let (tv1, tv2) = zero_small_small().unwrap();
+    vec.push(tv1); // passes cofactored, fails cofactorless
+    vec.push(tv2); // passes cofactored, passes cofactorless
+
+    // #2-3: canonical S, mixed R, small A
+    let (tv1, tv2) = non_zero_mixed_small().unwrap();
+    vec.push(tv1); // passes cofactored, fails cofactorless
+    vec.push(tv2); // passes cofactored, passes cofactorless
+
+    // #4-5: canonical S, small R, mixed A
+    let (tv1, tv2) = non_zero_small_mixed().unwrap();
+    vec.push(tv1); // passes cofactored, fails cofactorless
+    vec.push(tv2); // passes cofactored, passes cofactorless
+
+    // #6-7: canonical S, mixed R, mixed Axs
+    let (tv1, tv2) = non_zero_mixed_mixed().unwrap();
+    vec.push(tv2); // passes cofactored, passes cofactorless
+    vec.push(tv1); // passes cofactored, fails cofactorless
+
+    // Prereduce scalar which fails cofactorless
+    let tv1 = pre_reduced_scalar().unwrap();
+    vec.push(tv1);
+
+    let tv1 = large_s().unwrap();
+    vec.push(tv1);
+
+    let tv1 = really_large_s().unwrap();
+    vec.push(tv1);
+
+    let (tv1, tv2) = non_zero_small_non_canonical_mixed().unwrap();
+    vec.push(tv1);
+    vec.push(tv2);
+
+    let (tv1, tv2) = non_zero_mixed_small_non_canonical().unwrap();
+    vec.push(tv1);
+    vec.push(tv2);
+
+    Ok(vec)
+}
+
 fn main() -> Result<()> {
-    zero_small_small()?;
-    non_zero_mixed_small()?;
-    non_zero_small_mixed()?;
-    non_zero_mixed_mixed()?;
-    pre_reduced_scalar()?;
-    large_s()?;
-    really_large_s()?;
-    non_zero_small_mixed_non_canonical()?;
+    env_logger::init();
+    let vec = generate_test_vectors().unwrap();
+
+    // Write test vectors to json
+    let cases_json = serde_json::to_string(&vec)?;
+    let mut file = File::create("cases.json")?;
+    file.write_all(cases_json.as_bytes())?;
+
+    // Write test vectors to txt (to ease testing C implementations)
+    let mut file = File::create("cases.txt")?;
+    file.write_all(vec.len().to_string().as_bytes())?;
+    for tv in vec.iter() {
+        file.write_all(b"\nmsg=")?;
+        file.write_all(hex::encode(&tv.message).as_bytes())?;
+        file.write_all(b"\npbk=")?;
+        file.write_all(hex::encode(&tv.pub_key).as_bytes())?;
+        file.write_all(b"\nsig=")?;
+        file.write_all(hex::encode(&tv.signature).as_bytes())?;
+    }
+
     Ok(())
 }
 
@@ -788,6 +961,7 @@ mod tests {
     use super::*;
     use ed25519_dalek::{PublicKey, Signature, Verifier};
     use ed25519_zebra::{Signature as ZSignature, VerificationKey as ZPublicKey};
+    use libra_crypto;
     use ring::signature;
     use std::convert::TryFrom;
     use untrusted;
@@ -818,177 +992,91 @@ mod tests {
     }
 
     #[test]
-    fn test_zero_small_small() {
-        let (tv1, tv2) = zero_small_small().unwrap();
-        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
-        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
+    fn test_libra() {
+        let vec = generate_test_vectors().unwrap();
 
-        // only the second passes dalek's cofactorless
-        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
-        assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
-
-        // Same for ring's BoringSSL
-        assert!(ring_verify(&tv1).is_err());
-        assert!(ring_verify(&tv2).is_ok());
-
-        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
-        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
-
-        // both pass zebra's cofactored
-        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_ok());
-        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
+        print!("\n|libra-crypto   |");
+        for tv in vec.iter() {
+            let pk = match libra_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
+                Ok(pk) => pk,
+                Err(_e) => {
+                    print!(" X |");
+                    continue;
+                }
+            };
+            let sig = match libra_crypto::ed25519::Ed25519Signature::try_from(&tv.signature[..]) {
+                Ok(sig) => sig,
+                Err(_e) => {
+                    print!(" X |");
+                    continue;
+                }
+            };
+            match libra_crypto::traits::Signature::verify_arbitrary_msg(&sig, &tv.message[..], &pk)
+            {
+                Ok(_v) => print!(" V |"),
+                Err(_e) => print!(" X |"),
+            }
+        }
+        println!();
     }
 
     #[test]
-    fn test_non_zero_mixed_small() {
-        let (tv1, tv2) = non_zero_mixed_small().unwrap();
-        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
-        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
+    fn test_dalek() {
+        let vec = generate_test_vectors().unwrap();
 
-        // only the second passes dalek's cofactorless
-        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
-        assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+        print!("\n|Dalek          |");
+        for tv in vec.iter() {
+            match Signature::try_from(&tv.signature[..]) {
+                Ok(_v) => {}
+                Err(_e) => {
+                    print!(" V |");
+                    continue;
+                }
+            }
 
-        // Same for ring's BoringSSL
-        assert!(ring_verify(&tv1).is_err());
-        assert!(ring_verify(&tv2).is_ok());
-
-        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
-        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
-
-        // both pass zebra's cofactored
-        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_ok());
-        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
+            let (pk, sig) = unpack_test_vector_dalek(&tv);
+            match pk.verify(&tv.message[..], &sig) {
+                Ok(_v) => print!(" V |"),
+                Err(_e) => print!(" X |"),
+            }
+        }
+        println!();
     }
 
     #[test]
-    fn test_non_zero_small_mixed() {
-        let (tv1, tv2) = non_zero_small_mixed().unwrap();
-        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
-        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
+    fn test_boringssl() {
+        let vec = generate_test_vectors().unwrap();
 
-        // only the second passes dalek's cofactorless
-        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
-        assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
-
-        // Same for ring's BoringSSL
-        assert!(ring_verify(&tv1).is_err());
-        assert!(ring_verify(&tv2).is_ok());
-
-        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
-        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
-
-        // both pass zebra's cofactored
-        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_ok());
-        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
+        print!("\n|BoringSSL      |");
+        for tv in vec.iter() {
+            match ring_verify(&tv) {
+                Ok(_v) => print!(" V |"),
+                Err(_e) => print!(" X |"),
+            }
+        }
+        println!();
     }
 
     #[test]
-    fn test_non_zero_mixed_mixed() {
-        let (tv1, tv2) = non_zero_mixed_mixed().unwrap();
-        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
-        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
+    fn test_zebra() {
+        let vec = generate_test_vectors().unwrap();
 
-        // only the second passes dalek's cofactorless
-        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
-        assert!(pk2.verify(&tv2.message[..], &sig2).is_ok());
+        print!("\n|Zebra          |");
+        for tv in vec.iter() {
+            match Signature::try_from(&tv.signature[..]) {
+                Ok(_v) => {}
+                Err(_e) => {
+                    print!(" X |");
+                    continue;
+                }
+            }
 
-        // Same for ring's BoringSSL
-        assert!(ring_verify(&tv1).is_err());
-        assert!(ring_verify(&tv2).is_ok());
-
-        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
-        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
-
-        // both pass zebra's cofactored
-        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_ok());
-        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
-    }
-
-    #[test]
-    fn test_multiple_eight() {
-        assert!(multiple_of_eight_le(eight()))
-    }
-
-    #[test]
-    fn test_pre_reduced_scalar() {
-        let tv = pre_reduced_scalar().unwrap();
-        let (pk, sig) = unpack_test_vector_dalek(&tv);
-
-        // dalek is cofactorless
-        assert!(pk.verify(&tv.message[..], &sig).is_err());
-
-        // Same for ring's BoringSSL
-        assert!(ring_verify(&tv).is_err());
-
-        let (zpk, zsig) = unpack_test_vector_zebra(&tv);
-
-        // zebra is cofactored but doesn't pre-reduce
-        assert!(zpk.verify(&zsig, &tv.message[..]).is_ok());
-    }
-
-    #[test]
-    fn test_large_s() {
-        let tv = large_s().unwrap();
-
-        let (pk, sig) = unpack_test_vector_dalek(&tv);
-
-        // dalek refuses large scalars
-        assert!(pk.verify(&tv.message[..], &sig).is_err());
-
-        // Same for ring's BoringSSL
-        assert!(ring_verify(&tv).is_err());
-
-        let (zpk, zsig) = unpack_test_vector_zebra(&tv);
-
-        // zebra also refuses large scalars
-        assert!(zpk.verify(&zsig, &tv.message[..]).is_err());
-    }
-
-    #[test]
-    fn test_really_large_s() {
-        let tv = really_large_s().unwrap();
-
-        // dalek refuses to deserialize really large scalars
-        assert!(Signature::try_from(&tv.signature[..]).is_err());
-
-        // Signature rejection for ring's BoringSSL
-        assert!(ring_verify(&tv).is_err());
-
-        let (zpk, zsig) = unpack_test_vector_zebra(&tv);
-
-        // zebra also refuses large scalars
-        assert!(zpk.verify(&zsig, &tv.message[..]).is_err());
-    }
-
-    #[test]
-    fn test_non_canonical_r() {
-        let (tv1, tv2) = non_zero_small_mixed_non_canonical().unwrap();
-        let (pk1, sig1) = unpack_test_vector_dalek(&tv1);
-        let (pk2, sig2) = unpack_test_vector_dalek(&tv2);
-
-        // only the second passes dalek's cofactorless
-        assert!(pk1.verify(&tv1.message[..], &sig1).is_err());
-        assert!(pk2.verify(&tv2.message[..], &sig2).is_err());
-
-        println!(
-            "Error from dalek: {:?}",
-            pk1.verify(&tv1.message[..], &sig1)
-        );
-        println!(
-            "Error from dalek: {:?}",
-            pk1.verify(&tv1.message[..], &sig2)
-        );
-
-        // Same for ring's BoringSSL
-        assert!(ring_verify(&tv1).is_err());
-        assert!(ring_verify(&tv2).is_err());
-
-        let (zpk1, zsig1) = unpack_test_vector_zebra(&tv1);
-        let (zpk2, zsig2) = unpack_test_vector_zebra(&tv2);
-
-        // both pass zebra's cofactored
-        assert!(zpk1.verify(&zsig1, &tv1.message[..]).is_err());
-        assert!(zpk2.verify(&zsig2, &tv2.message[..]).is_ok());
+            let (pk, sig) = unpack_test_vector_zebra(&tv);
+            match pk.verify(&sig, &tv.message[..]) {
+                Ok(_v) => print!(" V |"),
+                Err(_e) => print!(" X |"),
+            }
+        }
+        println!();
     }
 }

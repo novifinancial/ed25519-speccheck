@@ -24,7 +24,7 @@ int main(void) {
     fp = fopen("../../cases.txt", "r+");
     fscanf(fp, "%i", &number_of_test_vectors);
     // printf("Number of test vectors: %i\n", number_of_test_vectors);
-    printf("\n|ref10          |");
+    printf("\n|LibSodium      |");
     for (int i = 0; i < number_of_test_vectors; i++) {
       // reading the message
       fscanf(fp, "%s", buff);

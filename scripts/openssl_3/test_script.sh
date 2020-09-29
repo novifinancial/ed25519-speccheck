@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPENSSL_PATH=/Users/valerini/Research/EdDSA/openssl
+export OPENSSL_PATH=./openssl-build
 
-gcc -o main main.c -L$OPENSSL_PATH -lssl -lcrypto -I$OPENSSL_PATH/include
+gcc -o main main.c -L"$OPENSSL_PATH"/lib -lssl -lcrypto -I"$OPENSSL_PATH"/include
 ./main
