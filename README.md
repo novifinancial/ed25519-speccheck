@@ -15,7 +15,7 @@ test vectors and their inteded test conditions.
 Those are a few of the cases we would like to cover:
 
 ```
-n|  | parameters              | cofactored        | cofactorless                     | comment                               |
+| n| parameters              | cofactored        | cofactorless                     | comment                               |
 |--+-------------------------+-------------------+----------------------------------+---------------------------------------|
 | 0| S = 0, R small, A small | always passes     | R = -k×A                         | see ed25519's verify_strict           |
 | 1| S > 0, R small, A small | always fails      | always fails                     | no large order component on the right |
@@ -89,6 +89,8 @@ For a total of 15 test vectors.
 |libra-crypto   | X | X | X | X | X | X | V | X | X | X | X | X | X | X | X |
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
 |LibSodium      | X | X | X | X | X | X | V | X | X | X | X | X | X | X | X |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|nCipher        | X | X | X | X | X | V | X | X | X | X | X | ? | ? | ? | ? |
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
 |npm            | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
