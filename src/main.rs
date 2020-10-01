@@ -1044,6 +1044,29 @@ mod tests {
     }
 
     #[test]
+    fn test_dalek_verify_strict() {
+        let vec = generate_test_vectors().unwrap();
+
+        print!("\n|Dalek strict   |");
+        for tv in vec.iter() {
+            match Signature::try_from(&tv.signature[..]) {
+                Ok(_v) => {}
+                Err(_e) => {
+                    print!(" V |");
+                    continue;
+                }
+            }
+
+            let (pk, sig) = unpack_test_vector_dalek(&tv);
+            match pk.verify_strict(&tv.message[..], &sig) {
+                Ok(_v) => print!(" V |"),
+                Err(_e) => print!(" X |"),
+            }
+        }
+        println!();
+    }
+
+    #[test]
     fn test_boringssl() {
         let vec = generate_test_vectors().unwrap();
 

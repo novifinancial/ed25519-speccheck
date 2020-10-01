@@ -5,14 +5,14 @@ in the implementation of the algorithm. Namely, we test bounds checks on points
 and scalars involved in a signature, along with cofactored vs. cofactorless verification.
 
 We hope this helps outline the measures needed to implement the FIPS 186-5 and
-RFC 8022 rigorously.
+RFC 8032 rigorously.
 
 You can run this utility with `RUST_LOG=debug cargo run` to get a list of the
 test vectors and their inteded test conditions.
 
 ## Condition table
 
-Those are a few of the cases we would like to cover:
+Those are the cases we cover:
 
 ```
 | n| parameters              | cofactored        | cofactorless                     | comment                               |

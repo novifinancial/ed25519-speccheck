@@ -2,6 +2,7 @@
 |BouncyCastle   | X | V | X | V | X | V | V | X | X | X | X | X | X | X | X |
 |CryptoKit      | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
 |Dalek          | X | V | X | V | X | V | V | X | X | X | V | X | X | X | V |
+|Dalek strict   | X | X | X | X | X | X | V | X | X | X | V | X | X | X | X |
 |ed25519-donna  | X | V | X | V | X | V | V | X | X | V | X | X | X | X | V |
 |ed25519-java   | X | V | X | V | X | V | V | X | X | V | V | X | X | V | X |
 |Go             | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
