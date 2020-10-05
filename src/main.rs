@@ -277,6 +277,11 @@ fn pick_small_nonzero_point(idx: usize) -> EdwardsPoint {
     deserialize_point(&EIGHT_TORSION[(idx % 7 + 1)]).unwrap()
 }
 
+//////////////////////
+// 0 (cofactored)   //
+// 1 (cofactorless) //
+//////////////////////
+
 pub fn zero_small_small() -> Result<(TestVector, TestVector), anyhow::Error> {
     let mut rng = new_rng();
     // Pick a torsion point
@@ -330,6 +335,11 @@ pub fn zero_small_small() -> Result<(TestVector, TestVector), anyhow::Error> {
 
     Ok((tv1, tv2))
 }
+
+//////////////////////
+// 2 (cofactored)   //
+// 3 (cofactorless) //
+//////////////////////
 
 pub fn non_zero_mixed_small() -> Result<(TestVector, TestVector)> {
     let mut rng = new_rng();
@@ -390,6 +400,11 @@ pub fn non_zero_mixed_small() -> Result<(TestVector, TestVector)> {
 
     Ok((tv1, tv2))
 }
+
+//////////////////////
+// 4 (cofactored)   //
+// 5 (cofactorless) //
+//////////////////////
 
 // The symmetric case from non_zero_mixed_small
 pub fn non_zero_small_mixed() -> Result<(TestVector, TestVector)> {
@@ -454,6 +469,11 @@ pub fn non_zero_small_mixed() -> Result<(TestVector, TestVector)> {
 
     Ok((tv1, tv2))
 }
+
+//////////////////////
+// 6 (cofactored)   //
+// 7 (cofactorless) //
+//////////////////////
 
 pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
     let mut rng = new_rng();
@@ -540,6 +560,10 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
     Ok((tv1, tv2))
 }
 
+////////////////////////////
+// 8 (pre-reduced scalar) //
+////////////////////////////
+
 fn pre_reduced_scalar() -> Result<TestVector> {
     let mut rng = new_rng();
 
@@ -607,6 +631,10 @@ fn pre_reduced_scalar() -> Result<TestVector> {
 mod non_reducing_scalar52;
 use non_reducing_scalar52::Scalar52;
 
+////////
+// 9  //
+////////
+
 fn large_s() -> Result<TestVector> {
     let mut rng = new_rng();
     // Pick a random scalar
@@ -664,6 +692,10 @@ fn large_s() -> Result<TestVector> {
 
     Ok(tv)
 }
+
+////////
+// 10 //
+////////
 
 fn really_large_s() -> Result<TestVector> {
     let mut rng = new_rng();
@@ -727,6 +759,10 @@ fn really_large_s() -> Result<TestVector> {
 
     Ok(tv)
 }
+
+///////////
+// 11-12 //
+///////////
 
 // This test vector has R of order 4 in non-canonical form, serialialized as EDFFFF..FFFF.
 // Libraries that reject non-canonical encodings of R would reject both vectors.
@@ -807,6 +843,10 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<(TestVector, TestVector)> 
 
     Ok((tv1, tv2))
 }
+
+///////////
+// 13-14 //
+///////////
 
 // This test vector has A of order 4 in non-canonical form, serialialized as EDFFFF..FFFF.
 // Libraries that reject non-canonical encodings of A would reject both vectors.
@@ -911,20 +951,24 @@ fn generate_test_vectors() -> Result<Vec<TestVector>> {
     vec.push(tv2); // passes cofactored, passes cofactorless
     vec.push(tv1); // passes cofactored, fails cofactorless
 
-    // Prereduce scalar which fails cofactorless
+    // #8 Prereduce scalar which fails cofactorless
     let tv1 = pre_reduced_scalar().unwrap();
     vec.push(tv1);
 
+    // #9 Large S
     let tv1 = large_s().unwrap();
     vec.push(tv1);
 
+    // #10 Large S beyond the high bit checks (i.e. non-canonical representation)
     let tv1 = really_large_s().unwrap();
     vec.push(tv1);
 
+    // #11-12
     let (tv1, tv2) = non_zero_small_non_canonical_mixed().unwrap();
     vec.push(tv1);
     vec.push(tv2);
 
+    // #13-14
     let (tv1, tv2) = non_zero_mixed_small_non_canonical().unwrap();
     vec.push(tv1);
     vec.push(tv2);
@@ -1036,6 +1080,29 @@ mod tests {
 
             let (pk, sig) = unpack_test_vector_dalek(&tv);
             match pk.verify(&tv.message[..], &sig) {
+                Ok(_v) => print!(" V |"),
+                Err(_e) => print!(" X |"),
+            }
+        }
+        println!();
+    }
+
+    #[test]
+    fn test_dalek_verify_strict() {
+        let vec = generate_test_vectors().unwrap();
+
+        print!("\n|Dalek strict   |");
+        for tv in vec.iter() {
+            match Signature::try_from(&tv.signature[..]) {
+                Ok(_v) => {}
+                Err(_e) => {
+                    print!(" V |");
+                    continue;
+                }
+            }
+
+            let (pk, sig) = unpack_test_vector_dalek(&tv);
+            match pk.verify_strict(&tv.message[..], &sig) {
                 Ok(_v) => print!(" V |"),
                 Err(_e) => print!(" X |"),
             }

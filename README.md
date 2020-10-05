@@ -5,47 +5,56 @@ in the implementation of the algorithm. Namely, we test bounds checks on points
 and scalars involved in a signature, along with cofactored vs. cofactorless verification.
 
 We hope this helps outline the measures needed to implement the FIPS 186-5 and
-RFC 8022 rigorously.
+RFC 8032 rigorously.
 
 You can run this utility with `RUST_LOG=debug cargo run` to get a list of the
 test vectors and their inteded test conditions.
 
+# Usage
+
+To run the scripts on the connected libraries, execute the `./run.sh` script at
+the root of the project.
+
+To print out the test cases, use `RUST_LOG=debug cargo run`.
+
 ## Condition table
 
-Those are a few of the cases we would like to cover:
+Those are the cases we considered, with the index of the test vectors when applicable:
 
 ```
-n|  | parameters              | cofactored        | cofactorless                     | comment                               |
-|--+-------------------------+-------------------+----------------------------------+---------------------------------------|
-| 0| S = 0, R small, A small | always passes     | R = -k×A                         | see ed25519's verify_strict           |
-| 1| S > 0, R small, A small | always fails      | always fails                     | no large order component on the right |
-| 2| S = 0, R mixed, A small | always fails      | always fails                     | no large order component on the left  |
-| 3| S > 0, R mixed, A small | 8×S×B = 8×R       | 8×S×B = 8×R ∧ L×R = -L×k×A       | [*]                                   |
-| 4| S = 0, R small, A mixed | always fails      | always fails                     | no large order component on the left  |
-| 5| S > 0, R small, A mixed | 8×S×B = 8×k×A     | 8×S×B = 8×k×A ∧ L×R = -L×k×A     | symmetric of [*]                      |
-| 6| S = 0, R mixed, A mixed | 8×R = -8×k×A      | R = -k×A                         | hard to test (req. hash inversion)    |
-| 7| S > 0, R mixed, A mixed | 8×S×B = 8×R+8×k×A | 8×S×B = 8×R+8×k×A ∧ L×R = -L×k×A |                                       |
-| 8| S > L                   | always passes     | always passes                    |                                       |
-| 9| R non-canonical, small  | always passes     | always passes                    |                                       |
-|10| A non-canonical, small  | always passes     | always passes                    |                                       |
+| n   | parameters              | cofactored        | cofactorless                     | comment                               |
+|-----+-------------------------+-------------------+----------------------------------+---------------------------------------|
+|0-1  | S = 0, R small, A small | always passes     | R = -k×A                         | see ed25519's verify_strict           |
+|     | S > 0, R small, A small | always fails      | always fails                     | no large order component on the right |
+|     | S = 0, R mixed, A small | always fails      | always fails                     | no large order component on the left  |
+|2-3  | S > 0, R mixed, A small | 8×S×B = 8×R       | 8×S×B = 8×R ∧ L×R = -L×k×A       | [*]                                   |
+|     | S = 0, R small, A mixed | always fails      | always fails                     | no large order component on the left  |
+|4-5  | S > 0, R small, A mixed | 8×S×B = 8×k×A     | 8×S×B = 8×k×A ∧ L×R = -L×k×A     | symmetric of [*]                      |
+|     | S = 0, R mixed, A mixed | 8×R = -8×k×A      | R = -k×A                         | hard to test (req. hash inversion)    |
+|6-7  | S > 0, R mixed, A mixed | 8×S×B = 8×R+8×k×A | 8×S×B = 8×R+8×k×A ∧ L×R = -L×k×A |                                       |
+|9-10 | S > L                   | always passes     | always passes                    |                                       |
+|10-11| R non-canonical, small  | always passes     | always passes                    | depends on reduction bef. hashing     |
+|12-13| A non-canonical, small  | always passes     | always passes                    | depends on reduction bef. hashing     |
 ```
 
 Here "mixed" means with a strictly positive torsion component but not small,
 i.e. "mixed" and "small" are mutually exclusive. Out of the eight test cases
-above, only 4 are concretely testable:
+above, only some are concretely testable:
 
--  the 7th test vector would require a hash inversion to generate.
-- The 2nd, 3d and 5th compinations of cases cannot produce a valid signature.
+-  the 7th line would require a hash inversion to generate.
+- The 2nd, 3d and 5th lines cannot produce a valid signature.
 
-We test each vector in [1, 4, 6, 8] for each cofactored or cofactorless case.
+We test each vector at lines [1, 4, 6, 8, 9, 10, 11] for cofactored or cofactorless case.
 
-Besides that, we also test:
+Besides small components, we also test:
 
-- a large S > L (prepared to pass cofactorless and cofactored).
-- "pre-reduced" scalar, namely if the verification equation is
+- a large S > L (prepared to pass cofactorless and cofactored) (vectors 9, 10,
+  where vector 10 contains a S so large it can't have a canonical serialization
+  with a null high bit).
+- a "pre-reduced" scalar (vector 8), namely one that fails if the verification equation is
   `[8] R + [8 k] A = [8 s] B` rather than the recommended `[8] (R + k A) = [8] sB`.
   (which passes cofactored, without pre-reduction)
-- a negative zero point in A
+- a negative zero point in A (vectors 12 & 13)
 
 For a total of 15 test vectors.
 
@@ -89,6 +98,8 @@ For a total of 15 test vectors.
 |libra-crypto   | X | X | X | X | X | X | V | X | X | X | X | X | X | X | X |
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
 |LibSodium      | X | X | X | X | X | X | V | X | X | X | X | X | X | X | X |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|nCipher        | X | X | X | X | X | V | X | X | X | X | X | ? | ? | ? | ? |
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
 |npm            | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
