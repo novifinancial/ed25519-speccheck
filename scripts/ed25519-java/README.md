@@ -3,6 +3,8 @@ Run from under IntelJ IDEA.
 Or set the CLASSPATH variable to point to all the jars in the dependencies and run
 `java -classpath $CLASSPATH TestVectorChecker`
 
+Note: A sample Maven `pom.xml` file with the required dependencies exists under the `/target` folder. 
+
 `java -version` outputs
 java version "1.8.0_181"
 Java(TM) SE Runtime Environment (build 1.8.0_181-b13)

@@ -53,27 +53,30 @@ Besides small components, we also test:
   with a null high bit).
 - a "pre-reduced" scalar (vector 8), namely one that fails if the verification equation is
   `[8] R + [8 k] A = [8 s] B` rather than the recommended `[8] (R + k A) = [8] sB`.
-  (which passes cofactored, without pre-reduction)
-- a negative zero point in A (vectors 12 & 13)
+  (which passes cofactored, without pre-reduction).
+- a negative zero point in A (vectors 12 & 13).
 
 For a total of 15 test vectors.
 
 ## Verified libraries
 
-- [Dalek](https://github.com/dalek-cryptography/ed25519-dalek) : in unit tests
-- [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests
+- [Apple CryptoKit](https://developer.apple.com/documentation/cryptokit) : in `scripts/ed25519-ios`
 - BoringSSL, through [Ring](https://github.com/briansmith/ring) : in unit tests
-- [Go-ed25519](https://golang.org/pkg/crypto/ed25519/) : in scripts/ed25519_test.go
-- [ed25519-java](https://github.com/str4d/ed25519-java) : in scripts/ed25519-java
-- [bouncycastle](https://www.bouncycastle.org/) : in scripts/ed25519-java
-- LibSodium, through [pynacl](https://github.com/pyca/pynacl) : in scripts/pynacl_test.py
-- [npm's ed25519](https://www.npmjs.com/package/ed25519) : in scripts/eddsa_test
-- [Pyca](https://cryptography.io/en/latest/) using OpenSSL 1.1.1g as default backend : in scripts/pyca-openssl
-- [OpenSSL](https://github.com/openssl/openssl) : in scripts openssl_3/test_script.sh
-- [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in scripts/tweetnacl
-- [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in scripts/python-ed25519.py
-- [ed25519-donna from Signal](https://github.com/signalapp/libsignal-protocol-c.git): in scripts/ed25519-signal-donna
-- ed25519 on nCipher, by Rob Starkey
+- [Bouncy Castle (Java)](https://www.bouncycastle.org/java.html) version 1.66 : in `scripts/ed25519-java`
+- [Dalek](https://github.com/dalek-cryptography/ed25519-dalek) : in unit tests
+- [ed25519-donna from Signal](https://github.com/signalapp/libsignal-protocol-c.git): in `scripts/ed25519-signal-donna`
+- [ed25519-java](https://github.com/str4d/ed25519-java) version 0.3.0 : in `scripts/ed25519-java`
+- [Go-ed25519](https://golang.org/pkg/crypto/ed25519/) : in `scripts/ed25519_test.go`
+- [libra-crypto](https://github.com/libra/libra/tree/master/crypto/crypto) : in unit tests
+- LibSodium, through [pynacl](https://github.com/pyca/pynacl) : in `scripts/pynacl_test.py`
+- nCipher's ed25519, by Rob Starkey
+- [npm's ed25519](https://www.npmjs.com/package/ed25519) : in `scripts/eddsa_test`
+- [OpenSSL](https://github.com/openssl/openssl) : in `scripts openssl_3/test_script.sh`
+- [Pyca](https://cryptography.io/en/latest/) using OpenSSL 1.1.1g as default backend : in `scripts/pyca-openssl`
+- [python-ed25519](https://github.com/warner/python-ed25519)) : in `scripts/python-ed25519`
+- [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in `scripts/python-ed25519.py`
+- [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl`
+- [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests
 
 ## Results
 
@@ -81,11 +84,11 @@ For a total of 15 test vectors.
 ┌---------------------------------------------------------------------------┐
 |Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11| 12| 13| 14|
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
+|Apple CryptoKit| X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
 |BoringSSL      | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|BouncyCastle   | X | V | X | V | X | V | V | X | X | X | X | X | X | X | X |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|CryptoKit      | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
+|Bouncy Castle  | X | V | X | V | X | V | V | X | X | X | X | X | X | X | X |
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
 |Dalek          | X | V | X | V | X | V | V | X | X | X | V | X | X | X | V |
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
