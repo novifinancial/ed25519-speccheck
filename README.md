@@ -1,64 +1,66 @@
 # ed25519-speccheck
 
-This repository generates and uses test vectors for EdDSA to check edge cases
+This repository generates and uses test vectors for Ed25519 signature scheme to check edge cases
 in the implementation of the algorithm. Namely, we test bounds checks on points
 and scalars involved in a signature, along with cofactored vs. cofactorless verification.
 
 We hope this helps outline the measures needed to implement the FIPS 186-5 and
-RFC 8032 rigorously.
+RFC 8032 standards rigorously.
 
 You can run this utility with `RUST_LOG=debug cargo run` to get a list of the
 test vectors and their inteded test conditions.
 
 # Usage
 
-To run the scripts on the connected libraries, execute the `./run.sh` script at
-the root of the project.
+To print out details on the test cases, use `RUST_LOG=debug cargo run`.
 
-To print out the test cases, use `RUST_LOG=debug cargo run`.
+To generate files with test cases, `cases.json` and `cases.txt`, use `cargo run`.
+
+To run the scripts on the connected libraries, execute the `./run.sh` script at
+the root of the project (some additional installations of the associated libraries might be required).
 
 ## Condition table
 
 Those are the cases we considered, with the index of the test vectors when applicable:
 
 ```
-| n   | parameters              | cofactored        | cofactorless                     | comment                               |
-|-----+-------------------------+-------------------+----------------------------------+---------------------------------------|
-|0-1  | S = 0, R small, A small | always passes     | R = -k×A                         | see ed25519's verify_strict           |
-|     | S > 0, R small, A small | always fails      | always fails                     | no large order component on the right |
-|     | S = 0, R mixed, A small | always fails      | always fails                     | no large order component on the left  |
-|2-3  | S > 0, R mixed, A small | 8×S×B = 8×R       | 8×S×B = 8×R ∧ L×R = -L×k×A       | [*]                                   |
-|     | S = 0, R small, A mixed | always fails      | always fails                     | no large order component on the left  |
-|4-5  | S > 0, R small, A mixed | 8×S×B = 8×k×A     | 8×S×B = 8×k×A ∧ L×R = -L×k×A     | symmetric of [*]                      |
-|     | S = 0, R mixed, A mixed | 8×R = -8×k×A      | R = -k×A                         | hard to test (req. hash inversion)    |
-|6-7  | S > 0, R mixed, A mixed | 8×S×B = 8×R+8×k×A | 8×S×B = 8×R+8×k×A ∧ L×R = -L×k×A |                                       |
-|8    | large H(R, A, M)        | passes            | passes                           | dependent on reduction (see below)    |
-|9-10 | S > L                   | always passes     | always passes                    |                                       |
-|11-12| R non-canonical, small  | always passes     | always passes                    | depends on reduction bef. hashing     |
-|13-14| A non-canonical, small  | always passes     | always passes                    | depends on reduction bef. hashing     |
+ ------------------------------------------------------------------------------------------------------------
+|  |    msg |    sig |  S        | A ord | R ord | cof-ed | cof-less |        comment                        |
+|------------------------------------------------------------------------------------------------------------|
+| 0| ..22b6 | ..0000 | S = 0     | small | small |    V   |    V     | small A and R                         |
+| 1| ..2e79 | ..ac04 | 0 < S < L | small | mixed |    V   |    V     | small A only                          |
+| 2| ..b9ab | ..260e | 0 < S < L | mixed | small |    V   |    V     | small R only                          |
+| 3| ..2e79 | ..d009 | 0 < S < L | mixed | mixed |    V   |    V     | succeeds unless full-order is checked |
+| 4| ..f56c | ..1a09 | 0 < S < L | mixed | mixed |    V   |    X     |                                       |
+| 5| ..f56c | ..7405 | 0 < S < L | mixed |   L   |    V*  |    X     | fails cofactored iff (8h) prereduced  |
+| 6| ..ec40 | ..a514 | S > L     |   L   |   L   |    V   |    V     | S out of bounds                       |
+| 7| ..ec40 | ..8c22 | S >> L    |   L   |   L   |    V   |    V     | S out of bounds                       |
+| 8| ..5baf | ..ac08 | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, reduced for hash     |
+| 9| ..5baf | ..ac08 | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, not reduced for hash |
+ ------------------------------------------------------------------------------------------------------------
 ```
 
 Here "mixed" means with a strictly positive torsion component but not small,
 i.e. "mixed" and "small" are mutually exclusive. Out of the eight test cases
 above, only some are concretely testable:
 
--  the 7th line would require a hash inversion to generate.
-- The 2nd, 3d and 5th lines cannot produce a valid signature.
+Vectors 0-2 have either small A or small R, or both.
 
-We test each vector at lines [1, 4, 6, 8, 9, 10, 11] for cofactored or cofactorless case.
+Vector 3 has A and R mixed and succeeds in both cofactored and cofactorless.
+
+Vector 4 has A and R mixed, succeeds in cofactored and fails cofactorless. This vector is the main indicator for a cofactored verification equation.
 
 Besides small components, we also test:
 
-- a large S > L (prepared to pass cofactorless and cofactored) (vectors 9, 10,
-  where vector 10 contains a S so large it can't have a canonical serialization
+- a large S > L (prepared to pass cofactorless and cofactored) (vectors 6, 7,
+  where vector 7 contains an S so large it can't have a canonical serialization
   with a null high bit).
-- a "pre-reduced" scalar (vector 8), namely one that fails if the verification equation is
+- a "pre-reduced" scalar (vector 5), namely one that fails if the verification equation is
   `[8] R + [8 k] A = [8 s] B` rather than the recommended `[8] (R + k A) = [8] sB`.
   (which passes cofactored, without pre-reduction).
-- A non-canonical representation of R (vectors 11 & 12).
-- a negative zero point in A (vectors 13 & 14).
+- a non-canonical representation of R (vectors 8 & 9).
 
-For a total of 15 test vectors.
+For a total of 10 test vectors.
 
 ## Verified libraries
 
@@ -83,50 +85,32 @@ For a total of 15 test vectors.
 ## Results
 
 ```
-┌---------------------------------------------------------------------------┐
-|Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11| 12| 13| 14|
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|Apple CryptoKit| X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|BoringSSL      | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|Bouncy Castle  | X | V | X | V | X | V | V | X | X | X | X | X | X | X | X |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|Dalek          | X | V | X | V | X | V | V | X | X | X | V | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|ed25519-donna  | X | V | X | V | X | V | V | X | X | V | X | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|ed25519-java   | X | V | X | V | X | V | V | X | X | V | V | X | X | V | X |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|Go             | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|libra-crypto   | X | X | X | X | X | X | V | X | X | X | X | X | X | X | X |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|LibSodium      | X | X | X | X | X | X | V | X | X | X | X | X | X | X | X |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|nCipher        | X | X | X | X | X | V | X | X | X | X | X | ? | ? | ? | ? |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|npm            | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|OpenSSL-3.0    | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|PyCA           | X | V | X | V | X | V | V | X | X | X | X | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|python-ed25519 | X | V | X | V | X | V | V | X | X | V | V | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|ref10          | X | V | X | V | X | V | V | X | X | V | X | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|TweetNaCl-js   | X | V | X | V | X | V | V | X | X | V | V | X | X | X | V |
-|---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---|
-|Zebra          | V | V | V | V | V | V | V | V | V | X | X | X | V | V | V |
-└---------------------------------------------------------------------------┘
-
+ -------------------------------------------------------
+|Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---------------+---+---+---+---+---+---+---+---+---+---|
+|BoringSSL      | V | V | V | V | X | X | X | X | X | X |
+|BouncyCastle   | V | V | V | V | X | X | X | X | X | X |
+|CryptoKit      | V | V | V | V | X | X | X | X | X | X |
+|Dalek          | V | V | V | V | X | X | X | V | X | X |
+|ed25519-donna  | V | V | V | V | X | X | V | X | X | X |
+|ed25519-java   | V | V | V | V | X | X | V | V | X | X |
+|Go             | V | V | V | V | X | X | X | X | X | X |
+|libra-crypto   | X | X | X | V | X | X | X | X | X | X |
+|LibSodium      | X | X | X | V | X | X | X | X | X | X |
+|npm            | V | V | V | V | X | X | X | X | X | X |
+|OpenSSL-3.0    | V | V | V | V | X | X | X | X | X | X |
+|PyCA           | V | V | V | V | X | X | X | X | X | X |
+|python-ed25519 | V | V | V | V | X | X | V | V | X | X |
+|ref10          | V | V | V | V | X | X | V | X | X | X |
+|TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X |
+|Zebra          | V | V | V | V | V | V | X | X | X | V |
+ --------------------------------------------------------
 ```
 
 Contributors
 ------------
 
-The authors of this code are Kostas Chalkias ([@kchalkias](https://github.com/kchalkias)), François Garillot ([@huitseeker](https://github.com/huitseeker)) and Lera Valerini ([@valerini](https://github.com/valerini)).  To learn more about contributing to this project, [see this document](./CONTRIBUTING.md).
+The authors of this code are Kostas Chalkias ([@kchalkias](https://github.com/kchalkias)), François Garillot ([@huitseeker](https://github.com/huitseeker)) and Valeria Nikolaenko ([@valerini](https://github.com/valerini)).  To learn more about contributing to this project, [see this document](./CONTRIBUTING.md).
 
 #### Acknowledgments
 
