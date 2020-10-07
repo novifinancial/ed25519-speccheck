@@ -32,9 +32,10 @@ Those are the cases we considered, with the index of the test vectors when appli
 |4-5  | S > 0, R small, A mixed | 8×S×B = 8×k×A     | 8×S×B = 8×k×A ∧ L×R = -L×k×A     | symmetric of [*]                      |
 |     | S = 0, R mixed, A mixed | 8×R = -8×k×A      | R = -k×A                         | hard to test (req. hash inversion)    |
 |6-7  | S > 0, R mixed, A mixed | 8×S×B = 8×R+8×k×A | 8×S×B = 8×R+8×k×A ∧ L×R = -L×k×A |                                       |
+|8    | large H(R, A, M)        | passes            | passes                           | dependent on reduction (see below)    |
 |9-10 | S > L                   | always passes     | always passes                    |                                       |
-|10-11| R non-canonical, small  | always passes     | always passes                    | depends on reduction bef. hashing     |
-|12-13| A non-canonical, small  | always passes     | always passes                    | depends on reduction bef. hashing     |
+|11-12| R non-canonical, small  | always passes     | always passes                    | depends on reduction bef. hashing     |
+|13-14| A non-canonical, small  | always passes     | always passes                    | depends on reduction bef. hashing     |
 ```
 
 Here "mixed" means with a strictly positive torsion component but not small,
@@ -54,7 +55,8 @@ Besides small components, we also test:
 - a "pre-reduced" scalar (vector 8), namely one that fails if the verification equation is
   `[8] R + [8 k] A = [8 s] B` rather than the recommended `[8] (R + k A) = [8] sB`.
   (which passes cofactored, without pre-reduction).
-- a negative zero point in A (vectors 12 & 13).
+- A non-canonical representation of R (vectors 11 & 12).
+- a negative zero point in A (vectors 13 & 14).
 
 For a total of 15 test vectors.
 
