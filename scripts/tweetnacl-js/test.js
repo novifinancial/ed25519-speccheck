@@ -1,3 +1,8 @@
+// Copyright (c) Facebook, Inc. and its affiliates.
+//
+// This source code is licensed under the APACHE 2.0 license found in
+// the LICENSE file in the root directory of this source tree.
+
 // import nacl from 'tweetnacl';
 // import nacl = require("tweetnacl") // cryptographic functions
 // import util = require("tweetnacl-util") // encoding & decoding
@@ -20,4 +25,3 @@ for (i = 0; i < tests.length; i++) {
   output += (res ? " V |" : " X |");
 }
 console.log(output + "\n");
-

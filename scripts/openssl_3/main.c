@@ -1,3 +1,8 @@
+// Copyright (c) Facebook, Inc. and its affiliates.
+//
+// This source code is licensed under the APACHE 2.0 license found in
+// the LICENSE file in the root directory of this source tree.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +45,7 @@ int main(int argc, char **argv) {
     hex_string_to_byte_array(buff + 4, 32, pk);
     fscanf(fp, "%s", buff);
     hex_string_to_byte_array(buff + 4, 64, sig);
-  
+
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_PKEY *ed_pkey = EVP_PKEY_new_raw_public_key(NID_ED25519, NULL, pk, 32);
     EVP_DigestVerifyInit(ctx, NULL, NULL, NULL, ed_pkey);

@@ -1,6 +1,7 @@
+// Copyright (c) Facebook, Inc. and its affiliates.
 //
-// Created by anomalroil on 8/26/20.
-//
+// This source code is licensed under the APACHE 2.0 license found in
+// the LICENSE file in the root directory of this source tree.
 
 #include <stdlib.h>
 #include <string.h>

@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the APACHE 2.0 license found in
+# the LICENSE file in the root directory of this source tree.
 import json
 
 from cryptography.hazmat.backends import default_backend
@@ -11,7 +15,8 @@ if __name__ == "__main__":
     output = '\n|PyCA           |'
     for i, test_case in enumerate(data):
         try:
-            pub_key = ed25519.Ed25519PublicKey.from_public_bytes(bytes.fromhex(test_case['pub_key']))
+            pub_key = ed25519.Ed25519PublicKey.from_public_bytes(
+                bytes.fromhex(test_case['pub_key']))
             msg = bytes.fromhex(test_case['message'])
             sig = bytes.fromhex(test_case['signature'])
             pub_key.verify(sig, msg)
