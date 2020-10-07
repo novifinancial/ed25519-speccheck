@@ -130,7 +130,7 @@ The authors of this code are Kostas Chalkias ([@kchalkias](https://github.com/kc
 
 #### Acknowledgments
 
-Special thanks go to Rajath Shanbag and Yolan Romailler for contributing test
+Special thanks go to Yolan Romailler, Rajath Shanbag and Rob Starkey for contributing test
 vector results.
 
 
