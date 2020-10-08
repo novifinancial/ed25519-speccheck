@@ -1038,8 +1038,8 @@ fn generate_test_vectors() -> Result<Vec<TestVector>> {
     // #8-9 Non canonical R
     let mut tv_vec = non_zero_small_non_canonical_mixed().unwrap();
     assert!(tv_vec.len() == 2);
-    info.append(format!("| 8| ..{:} | ..{:} |  < L | mixed | small*|    V   |    V     | non-canonical R, reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
-    info.append(format!("| 9| ..{:} | ..{:} |  < L | mixed | small*|    V   |    V     | non-canonical R, not reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
+    info.append(format!("| 8| ..{:} | ..{:} |  < L | mixed | small*|    V   |    V     | non-canonical R, reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[0].signature)[124..]));
+    info.append(format!("| 9| ..{:} | ..{:} |  < L | mixed | small*|    V   |    V     | non-canonical R, not reduced for hash |\n", &hex::encode(&tv_vec[1].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
     vec.append(&mut tv_vec);
 
     // #10-11 Non canonical A
@@ -1048,6 +1048,8 @@ fn generate_test_vectors() -> Result<Vec<TestVector>> {
     // info.append(format!("|10| ..{:} | ..{:} |  < L | small*| mixed |    V   |    V     | non-canonical A, reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
     // info.append(format!("|11| ..{:} | ..{:} |  < L | small*| mixed |    V   |    V     | non-canonical A, not reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
     // vec.append(&mut tv_vec);
+
+    // print!("{}", info.string().unwrap());
 
     Ok(vec)
 }
