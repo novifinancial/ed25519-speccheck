@@ -19,13 +19,16 @@ use std::io::prelude::*;
 #[macro_use]
 extern crate log;
 
+extern crate string_builder;
+use string_builder::Builder;
+
 // The 8-torsion subgroup E[8].
 //
 // In the case of Curve25519, it is cyclic; the i-th element of
 // the array is [i]P, where P is a point of order 8
 // generating E[8].
 //
-// Thus E[8] is the points indexed by `0,2,4,6`, and
+// Thus E[4] is the points indexed by `0,2,4,6`, and
 // E[2] is the points indexed by `0,4`.
 //
 // The following byte arrays have been ported from curve25519-dalek /backend/serial/u64/constants.rs
@@ -38,30 +41,60 @@ const EIGHT_TORSION: [[u8; 32]; 8] = [
     [
         199, 23, 106, 112, 61, 77, 216, 79, 186, 60, 11, 118, 13, 16, 103, 15, 42, 32, 83, 250, 44,
         57, 204, 198, 78, 199, 253, 119, 146, 172, 3, 122,
-    ],
+    ], // order 8
     [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 128,
-    ],
+    ], // order 4
     [
         38, 232, 149, 143, 194, 178, 39, 176, 69, 195, 244, 137, 242, 239, 152, 240, 213, 223, 172,
         5, 211, 198, 51, 57, 177, 56, 2, 136, 109, 83, 252, 5,
-    ],
+    ], // order 8
     [
         236, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127,
-    ],
+    ], // order 2
     [
         38, 232, 149, 143, 194, 178, 39, 176, 69, 195, 244, 137, 242, 239, 152, 240, 213, 223, 172,
         5, 211, 198, 51, 57, 177, 56, 2, 136, 109, 83, 252, 133,
-    ],
+    ], // order 8
     [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
-    ],
+    ], // order 4
     [
         199, 23, 106, 112, 61, 77, 216, 79, 186, 60, 11, 118, 13, 16, 103, 15, 42, 32, 83, 250, 44,
         57, 204, 198, 78, 199, 253, 119, 146, 172, 3, 250,
+    ], // order 8
+];
+
+// Non canonical representations of those torsion points
+// for which the non-canonical serialization exist
+// First 3 elements are neutral elements
+const EIGHT_TORSION_NON_CANONICAL: [[u8; 32]; 6] = [
+    [
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 128,
+    ], // neutral element, incorrect x-sign
+    [
+        238, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    ], // neutral element, incorrect x-sign
+    [
+        236, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    ], // incorrect x-sign
+    [
+        238, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127,
+    ], // neutral element
+    [
+        237, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    ],
+    [
+        237, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127,
     ],
 ];
 
@@ -774,7 +807,11 @@ fn really_large_s() -> Result<TestVector> {
 // Libraries that accept the first vector, but reject the second reduce the R prior to hashing.
 // Libraries that reject the first vector, but accept the second do not reduce the R prior to hashing.
 // Both vectors pass cofactored and cofactorless verification.
-pub fn non_zero_small_non_canonical_mixed() -> Result<(TestVector, TestVector)> {
+pub fn non_zero_small_non_canonical_mixed() -> Result<Vec<TestVector>> {
+    let mut vec = Vec::new();
+
+    // r not identity, with incorrect x sign and y coordinate larger than p
+    let r_arr = EIGHT_TORSION_NON_CANONICAL[5];
     let mut rng = new_rng();
     // Pick a random scalar
     let mut scalar_bytes = [0u8; 32];
@@ -784,14 +821,7 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<(TestVector, TestVector)> 
     debug_assert!(a != Scalar::zero());
 
     let pub_key_component = a * ED25519_BASEPOINT_POINT;
-
-    let r_arr = [
-        // non-canonically serialized point EIGHT_TORSION[6]
-        // of order 4
-        236, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    ];
-    let r = deserialize_point(&r_arr).unwrap();
+    let r = deserialize_point(&r_arr[..32]).unwrap();
 
     let small_idx: usize = rng.next_u64() as usize;
     let r2 = pick_small_nonzero_point(small_idx + 1);
@@ -801,7 +831,10 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<(TestVector, TestVector)> 
     rng.fill_bytes(&mut message);
 
     // reduces r prior to serializing into the hash input
-    while !(r + compute_hram(&message, &pub_key, &r) * r2.neg()).is_identity() {
+    while !(r + compute_hram(&message, &pub_key, &r) * r2.neg()).is_identity()
+        || (r + compute_hram_with_r_array(&message, &pub_key, &r_arr[..32]) * r2.neg())
+            .is_identity()
+    {
         rng.fill_bytes(&mut message);
     }
     let s = compute_hram(&message, &pub_key, &r) * a;
@@ -822,14 +855,16 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<(TestVector, TestVector)> 
         pub_key: pub_key.compress().to_bytes(),
         signature,
     };
+    vec.push(tv1);
 
     // does not reduce r prior to serializing into the hash input
-    while !(r + compute_hram_with_r_array(&message, &pub_key, &r_arr) * r2.neg()).is_identity() {
+    while !(r + compute_hram_with_r_array(&message, &pub_key, &r_arr[..32]) * r2.neg())
+        .is_identity()
+        || (r + compute_hram(&message, &pub_key, &r) * r2.neg()).is_identity()
+    {
         rng.fill_bytes(&mut message);
     }
-    let s = compute_hram_with_r_array(&message, &pub_key, &r_arr) * a;
-    debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_err());
-    debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
+    let s = compute_hram_with_r_array(&message, &pub_key, &r_arr[..32]) * a;
     let mut signature = serialize_signature(&r, &s);
     signature[..32].clone_from_slice(&r_arr[..32]);
     debug!(
@@ -845,8 +880,9 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<(TestVector, TestVector)> 
         pub_key: pub_key.compress().to_bytes(),
         signature,
     };
+    vec.push(tv2);
 
-    Ok((tv1, tv2))
+    Ok(vec)
 }
 
 ///////////
@@ -858,7 +894,12 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<(TestVector, TestVector)> 
 // Libraries that accept the first vector, but reject the second reduce the A prior to hashing.
 // Libraries that reject the first vector, but accept the second do not reduce the A prior to hashing.
 // Both vectors pass cofactored and cofactorless verification.
-pub fn non_zero_mixed_small_non_canonical() -> Result<(TestVector, TestVector)> {
+#[allow(dead_code)]
+pub fn non_zero_mixed_small_non_canonical() -> Result<Vec<TestVector>> {
+    let mut vec = Vec::new();
+
+    // pk not identity, with incorrect x sign and y coordinate larger than p
+    let pub_key_arr = EIGHT_TORSION_NON_CANONICAL[2];
     let mut rng = new_rng();
     // Pick a random Scalar
     let mut scalar_bytes = [0u8; 32];
@@ -868,16 +909,7 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<(TestVector, TestVector)> 
     debug_assert!(s != Scalar::zero());
 
     let r0 = s * ED25519_BASEPOINT_POINT;
-
-    // Pick a torsion point
-    let pub_key_arr = [
-        // non-canonically serialized point EIGHT_TORSION[6]
-        // of order 4
-        236, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    ];
-    let pub_key = deserialize_point(&pub_key_arr).unwrap();
-
+    let pub_key = deserialize_point(&pub_key_arr[..32]).unwrap();
     let r = r0 + pub_key.neg();
 
     let mut message = [0u8; 32];
@@ -885,7 +917,7 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<(TestVector, TestVector)> 
 
     // succeeds when public key is reserialized
     while !(pub_key.neg() + compute_hram(&message, &pub_key, &r) * pub_key).is_identity()
-        || (pub_key.neg() + compute_hram_with_pk_array(&message, &pub_key_arr, &r) * pub_key)
+        || (pub_key.neg() + compute_hram_with_pk_array(&message, &pub_key_arr[..32], &r) * pub_key)
             .is_identity()
     {
         rng.fill_bytes(&mut message);
@@ -893,7 +925,7 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<(TestVector, TestVector)> 
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_ok());
     debug!(
-        "S > 0, negative-zero non-canonical A, mixed R\n\
+        "S > 0, non-canonical A, mixed R\n\
          passes cofactored, passes cofactorless, repudiable\n\
          reserializes A\n\
          \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
@@ -906,9 +938,10 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<(TestVector, TestVector)> 
         pub_key: pub_key_arr,
         signature: serialize_signature(&r, &s),
     };
+    vec.push(tv1);
 
     // succeeds when public key is not-reserialized
-    while !(pub_key.neg() + compute_hram_with_pk_array(&message, &pub_key_arr, &r) * pub_key)
+    while !(pub_key.neg() + compute_hram_with_pk_array(&message, &pub_key_arr[..32], &r) * pub_key)
         .is_identity()
         || (pub_key.neg() + compute_hram(&message, &pub_key, &r) * pub_key).is_identity()
     {
@@ -930,53 +963,91 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<(TestVector, TestVector)> 
         pub_key: pub_key_arr,
         signature: serialize_signature(&r, &s),
     };
+    vec.push(tv2);
 
-    Ok((tv1, tv2))
+    Ok(vec)
 }
 
 fn generate_test_vectors() -> Result<Vec<TestVector>> {
-    // #0-1: canonical S, small R, small A
+    let mut info = Builder::default();
+    info.append("|  |    msg |    sig |  S   |    A  |    R  | cof-ed | cof-less |        comment        |\n");
+    info.append("|---------------------------------------------------------------------------------------|\n");
     let mut vec = Vec::new();
-    let (tv1, tv2) = zero_small_small().unwrap();
-    vec.push(tv1); // passes cofactored, fails cofactorless
+
+    // #0: canonical S, small R, small A
+    let (_tv1, tv2) = zero_small_small().unwrap();
+    info.append(format!(
+        "| 0| ..{:} | ..{:} |  = 0 | small | small |    V   |    V     | small A and R |\n",
+        &hex::encode(&tv2.message)[60..],
+        &hex::encode(&tv2.signature)[124..]
+    ));
     vec.push(tv2); // passes cofactored, passes cofactorless
 
-    // #2-3: canonical S, mixed R, small A
-    let (tv1, tv2) = non_zero_mixed_small().unwrap();
-    vec.push(tv1); // passes cofactored, fails cofactorless
+    // #1: canonical S, mixed R, small A
+    let (_tv1, tv2) = non_zero_mixed_small().unwrap();
+    info.append(format!(
+        "| 1| ..{:} | ..{:} |  < L | small | mixed |    V   |    V     | small A only |\n",
+        &hex::encode(&tv2.message)[60..],
+        &hex::encode(&tv2.signature)[124..]
+    ));
     vec.push(tv2); // passes cofactored, passes cofactorless
 
-    // #4-5: canonical S, small R, mixed A
-    let (tv1, tv2) = non_zero_small_mixed().unwrap();
-    vec.push(tv1); // passes cofactored, fails cofactorless
+    // #2: canonical S, small R, mixed A
+    let (_tv1, tv2) = non_zero_small_mixed().unwrap();
+    info.append(format!(
+        "| 2| ..{:} | ..{:} |  < L | mixed | small |    V   |    V     | small R only |\n",
+        &hex::encode(&tv2.message)[60..],
+        &hex::encode(&tv2.signature)[124..]
+    ));
     vec.push(tv2); // passes cofactored, passes cofactorless
 
-    // #6-7: canonical S, mixed R, mixed Axs
+    // #3-4: canonical S, mixed R, mixed A
     let (tv1, tv2) = non_zero_mixed_mixed().unwrap();
+    info.append(format!("| 3| ..{:} | ..{:} |  < L | mixed | mixed |    V   |    V     | succeeds unless full-order is checked |\n", &hex::encode(&tv2.message)[60..], &hex::encode(&tv2.signature)[124..]));
     vec.push(tv2); // passes cofactored, passes cofactorless
+    info.append(format!(
+        "| 4| ..{:} | ..{:} |  < L | mixed | mixed |    V   |    X     |  |\n",
+        &hex::encode(&tv1.message)[60..],
+        &hex::encode(&tv1.signature)[124..]
+    ));
     vec.push(tv1); // passes cofactored, fails cofactorless
 
-    // #8 Prereduce scalar which fails cofactorless
+    // #5 Prereduce scalar which fails cofactorless
     let tv1 = pre_reduced_scalar().unwrap();
+    info.append(format!("| 5| ..{:} | ..{:} |  < L | mixed |   L   |    V*  |    X     | fails cofactored iff (8h) prereduced |\n", &hex::encode(&tv1.message)[60..], &hex::encode(&tv1.signature)[124..]));
     vec.push(tv1);
 
-    // #9 Large S
+    // #6 Large S
     let tv1 = large_s().unwrap();
+    info.append(format!(
+        "| 6| ..{:} | ..{:} |  > L |   L   |   L   |    V   |    V     |  |\n",
+        &hex::encode(&tv1.message)[60..],
+        &hex::encode(&tv1.signature)[124..]
+    ));
     vec.push(tv1);
 
-    // #10 Large S beyond the high bit checks (i.e. non-canonical representation)
+    // #7 Large S beyond the high bit checks (i.e. non-canonical representation)
     let tv1 = really_large_s().unwrap();
+    info.append(format!(
+        "| 7| ..{:} | ..{:} | >> L |   L   |   L   |    V   |    V     |  |\n",
+        &hex::encode(&tv1.message)[60..],
+        &hex::encode(&tv1.signature)[124..]
+    ));
     vec.push(tv1);
 
-    // #11-12
-    let (tv1, tv2) = non_zero_small_non_canonical_mixed().unwrap();
-    vec.push(tv1);
-    vec.push(tv2);
+    // #8-9 Non canonical R
+    let mut tv_vec = non_zero_small_non_canonical_mixed().unwrap();
+    assert!(tv_vec.len() == 2);
+    info.append(format!("| 8| ..{:} | ..{:} |  < L | mixed | small*|    V   |    V     | non-canonical R, reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
+    info.append(format!("| 9| ..{:} | ..{:} |  < L | mixed | small*|    V   |    V     | non-canonical R, not reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
+    vec.append(&mut tv_vec);
 
-    // #13-14
-    let (tv1, tv2) = non_zero_mixed_small_non_canonical().unwrap();
-    vec.push(tv1);
-    vec.push(tv2);
+    // #10-11 Non canonical A
+    // let mut tv_vec = non_zero_mixed_small_non_canonical().unwrap();
+    // assert!(tv_vec.len() == 2);
+    // info.append(format!("|10| ..{:} | ..{:} |  < L | small*| mixed |    V   |    V     | non-canonical A, reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
+    // info.append(format!("|11| ..{:} | ..{:} |  < L | small*| mixed |    V   |    V     | non-canonical A, not reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
+    // vec.append(&mut tv_vec);
 
     Ok(vec)
 }
@@ -1001,7 +1072,6 @@ fn main() -> Result<()> {
         file.write_all(b"\nsig=")?;
         file.write_all(hex::encode(&tv.signature).as_bytes())?;
     }
-
     Ok(())
 }
 
