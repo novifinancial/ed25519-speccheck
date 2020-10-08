@@ -35,8 +35,8 @@ Those are the cases we considered, with the index of the test vectors when appli
 | 5| ..f56c | ..7405 | 0 < S < L | mixed |   L   |    V*  |    X     | fails cofactored iff (8h) prereduced  |
 | 6| ..ec40 | ..a514 | S > L     |   L   |   L   |    V   |    V     | S out of bounds                       |
 | 7| ..ec40 | ..8c22 | S >> L    |   L   |   L   |    V   |    V     | S out of bounds                       |
-| 8| ..5baf | ..ac08 | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, reduced for hash     |
-| 9| ..5baf | ..ac08 | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, not reduced for hash |
+| 8| ..3a5a | ..6607 | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, reduced for hash     |
+| 9| ..c1a1 | ..7b09 | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, not reduced for hash |
  ------------------------------------------------------------------------------------------------------------
 ```
 
