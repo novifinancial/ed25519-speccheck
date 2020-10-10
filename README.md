@@ -35,8 +35,10 @@ Those are the cases we considered, with the index of the test vectors when appli
 | 5| ..f56c | ..7405 | 0 < S < L | mixed |   L   |    V*  |    X     | fails cofactored iff (8h) prereduced  |
 | 6| ..ec40 | ..a514 | S > L     |   L   |   L   |    V   |    V     | S out of bounds                       |
 | 7| ..ec40 | ..8c22 | S >> L    |   L   |   L   |    V   |    V     | S out of bounds                       |
-| 8| ..3a5a | ..6607 | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, reduced for hash     |
-| 9| ..c1a1 | ..7b09 | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, not reduced for hash |
+| 8| ..8b41 | ..5f0f | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, reduced for hash     |
+| 9| ..8b41 | ..4908 | 0 < S < L | mixed | small*|    V   |    V     | non-canonical R, not reduced for hash |
+|10| ..155b | ..ac04 | 0 < S < L | small*| mixed |    V   |    V     | non-canonical A, reduced for hash     |
+|11| ..c06f | ..ac04 | 0 < S < L | small*| mixed |    V   |    V     | non-canonical A, not reduced for hash |
  ------------------------------------------------------------------------------------------------------------
 ```
 
@@ -59,8 +61,9 @@ Besides small components, we also test:
   `[8] R + [8 k] A = [8 s] B` rather than the recommended `[8] (R + k A) = [8] sB`.
   (which passes cofactored, without pre-reduction).
 - a non-canonical representation of R (vectors 8 & 9).
+- a non-canonical representation of A (vectors 10 & 11).
 
-For a total of 10 test vectors.
+For a total of 12 test vectors.
 
 ## Verified libraries
 
@@ -85,26 +88,27 @@ For a total of 10 test vectors.
 ## Results
 
 ```
- -------------------------------------------------------
-|Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
-|---------------+---+---+---+---+---+---+---+---+---+---|
-|BoringSSL      | V | V | V | V | X | X | X | X | X | X |
-|BouncyCastle   | V | V | V | V | X | X | X | X | X | X |
-|CryptoKit      | V | V | V | V | X | X | X | X | X | X |
-|Dalek          | V | V | V | V | X | X | X | V | X | X |
-|ed25519-donna  | V | V | V | V | X | X | V | X | X | X |
-|ed25519-java   | V | V | V | V | X | X | V | V | X | X |
-|Go             | V | V | V | V | X | X | X | X | X | X |
-|libra-crypto   | X | X | X | V | X | X | X | X | X | X |
-|LibSodium      | X | X | X | V | X | X | X | X | X | X |
-|npm            | V | V | V | V | X | X | X | X | X | X |
-|OpenSSL-3.0    | V | V | V | V | X | X | X | X | X | X |
-|PyCA           | V | V | V | V | X | X | X | X | X | X |
-|python-ed25519 | V | V | V | V | X | X | V | V | X | X |
-|ref10          | V | V | V | V | X | X | V | X | X | X |
-|TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X |
-|Zebra          | V | V | V | V | V | V | X | X | X | V |
- --------------------------------------------------------
+ ---------------------------------------------------------------
+|Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11|
+|---------------+---+---+---+---+---+---+---+---+---+---+---+---|
+|BoringSSL      | V | V | V | V | X | X | X | X | X | X | X | V |
+|BouncyCastle   | V | V | V | V | X | X | X | X | X | X | X | X |
+|CryptoKit      | V | V | V | V | X | X | X | X | X | X | X | V |
+|Dalek          | V | V | V | V | X | X | X | V | X | X | X | V |
+|Dalek strict   | X | X | X | V | X | X | X | V | X | X | X | X |
+|ed25519-donna  | V | V | V | V | X | X | V | X | X | X | X | V |
+|ed25519-java   | V | V | V | V | X | X | V | V | X | X | V | X |
+|Go             | V | V | V | V | X | X | X | X | X | X | X | V |
+|libra-crypto   | X | X | X | V | X | X | X | X | X | X | X | X |
+|LibSodium      | X | X | X | V | X | X | X | X | X | X | X | X |
+|npm            | V | V | V | V | X | X | X | X | X | X | X | V |
+|OpenSSL-3.0    | V | V | V | V | X | X | X | X | X | X | X | V |
+|PyCA           | V | V | V | V | X | X | X | X | X | X | X | V |
+|python-ed25519 | V | V | V | V | X | X | V | V | X | X | X | V |
+|ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
+|TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
+|Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |
+ ---------------------------------------------------------------
 ```
 
 Contributors
