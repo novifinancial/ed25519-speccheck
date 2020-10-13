@@ -1217,4 +1217,53 @@ mod tests {
         }
         println!();
     }
+
+    #[test]
+    fn test_repudiation_dalek() {
+        // Pick a random Scalar
+        let mut rng = new_rng();
+        let mut scalar_bytes = [0u8; 32];
+        rng.fill_bytes(&mut scalar_bytes);
+        let s = Scalar::from_bytes_mod_order(scalar_bytes);
+        debug_assert!(s.is_canonical());
+        debug_assert!(s != Scalar::zero());
+
+        let r0 = s * ED25519_BASEPOINT_POINT;
+        // Pick a torsion point of order 2
+        let pub_key = deserialize_point(&EIGHT_TORSION[4]).unwrap();
+        let r = r0 + pub_key.neg();
+
+        let message1 = b"Send 100 USD to Alice";
+        let message2 = b"Send 100000 USD to Alice";
+
+        debug_assert!(
+            (pub_key.neg() + compute_hram(message1, &pub_key, &r) * pub_key).is_identity()
+        );
+        debug_assert!(
+            (pub_key.neg() + compute_hram(message2, &pub_key, &r) * pub_key).is_identity()
+        );
+
+        debug_assert!(verify_cofactored(message1, &pub_key, &(r, s)).is_ok());
+        debug_assert!(verify_cofactorless(message1, &pub_key, &(r, s)).is_ok());
+        debug_assert!(verify_cofactored(message2, &pub_key, &(r, s)).is_ok());
+        debug_assert!(verify_cofactorless(message2, &pub_key, &(r, s)).is_ok());
+
+        println!(
+            "Small pk breaks non-repudiation:\n\
+             \"pub_key\": \"{}\",\n\
+             \"signature\": \"{}\",\n\
+             \"message1\": \"{}\",\n\
+             \"message2\": \"{}\"",
+            hex::encode(&pub_key.compress().as_bytes()),
+            hex::encode(&serialize_signature(&r, &s)),
+            hex::encode(&message1),
+            hex::encode(&message2),
+        );
+
+        let signature = serialize_signature(&r, &s);
+        let pk = PublicKey::from_bytes(&pub_key.compress().as_bytes()[..]).unwrap();
+        let sig = Signature::try_from(&signature[..]).unwrap();
+        debug_assert!(pk.verify(message1, &sig).is_ok());
+        debug_assert!(pk.verify(message2, &sig).is_ok());
+    }
 }
