@@ -75,27 +75,27 @@ const EIGHT_TORSION_NON_CANONICAL: [[u8; 32]; 6] = [
     [
         1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 128,
-    ], // neutral element, incorrect x-sign
+    ], // neutral element, incorrect x-sign : (-0, 1) order 1
     [
         238, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    ], // neutral element, incorrect x-sign
+    ], // neutral element, incorrect x-sign : (-0, 2^255 - 18) order 1
     [
         236, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    ], // incorrect x-sign
+    ], // incorrect x-sign : (-0, -1) order 2
     [
         238, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127,
-    ], // neutral element
+    ], // neutral element with large y component : (0, 2^255 - 18) order 1
     [
         237, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    ],
+    ], // (-sqrt(-1), 2^255 - 19) order 4
     [
         237, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127,
-    ],
+    ], // (sqrt(-1), 2^255 - 19) order 4
 ];
 
 // 8 as a Scalar - to reflect instructions of "interpreting values as
@@ -802,16 +802,15 @@ fn really_large_s() -> Result<TestVector> {
 // 11-12 //
 ///////////
 
-// This test vector has R of order 4 in non-canonical form, serialialized as EDFFFF..FFFF.
-// Libraries that reject non-canonical encodings of R would reject both vectors.
-// Libraries that accept the first vector, but reject the second reduce the R prior to hashing.
-// Libraries that reject the first vector, but accept the second do not reduce the R prior to hashing.
-// Both vectors pass cofactored and cofactorless verification.
+// This test vector has R = (-0, 2^255 - 20) of order 2 in non-canonical form, serialialized as ECFFFF..FFFF.
+// Libraries that reject non-canonical encodings of R or small-order R would reject both vectors.
+// The first vector will pass cofactored and cofactorless verifications that reserialize R prior to hashing and fail those that do not reserialize R for the hash.
+// The second vector will behave in an opposite way.
 pub fn non_zero_small_non_canonical_mixed() -> Result<Vec<TestVector>> {
     let mut vec = Vec::new();
 
     // r not identity, with incorrect x sign and y coordinate larger than p
-    let r_arr = EIGHT_TORSION_NON_CANONICAL[5];
+    let r_arr = EIGHT_TORSION_NON_CANONICAL[2];
     let mut rng = new_rng();
     // Pick a random scalar
     let mut scalar_bytes = [0u8; 32];
@@ -830,9 +829,8 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<Vec<TestVector>> {
     let mut message = [0u8; 32];
     rng.fill_bytes(&mut message);
 
-    // reduces r prior to serializing into the hash input
     while !(r + compute_hram(&message, &pub_key, &r) * r2.neg()).is_identity()
-        || (r + compute_hram_with_r_array(&message, &pub_key, &r_arr[..32]) * r2.neg())
+        || !(r + compute_hram_with_r_array(&message, &pub_key, &r_arr[..32]) * r2.neg())
             .is_identity()
     {
         rng.fill_bytes(&mut message);
@@ -857,13 +855,6 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<Vec<TestVector>> {
     };
     vec.push(tv1);
 
-    // does not reduce r prior to serializing into the hash input
-    while !(r + compute_hram_with_r_array(&message, &pub_key, &r_arr[..32]) * r2.neg())
-        .is_identity()
-        || (r + compute_hram(&message, &pub_key, &r) * r2.neg()).is_identity()
-    {
-        rng.fill_bytes(&mut message);
-    }
     let s = compute_hram_with_r_array(&message, &pub_key, &r_arr[..32]) * a;
     let mut signature = serialize_signature(&r, &s);
     signature[..32].clone_from_slice(&r_arr[..32]);
@@ -889,17 +880,20 @@ pub fn non_zero_small_non_canonical_mixed() -> Result<Vec<TestVector>> {
 // 13-14 //
 ///////////
 
-// This test vector has A of order 4 in non-canonical form, serialialized as EDFFFF..FFFF.
-// Libraries that reject non-canonical encodings of A would reject both vectors.
-// Libraries that accept the first vector, but reject the second reduce the A prior to hashing.
-// Libraries that reject the first vector, but accept the second do not reduce the A prior to hashing.
-// Both vectors pass cofactored and cofactorless verification.
+// This test vector has A = (-0, 2^255 - 20) of order 2 in non-canonical form, serialialized as ECFFFF..FFFF.
+// Libraries that reject non-canonical encodings of A or reject A of small order would reject both vectors.
+// Libraries with cofactorless verification that accept the first vector,
+// but reject the second reduce A prior to hashing.
+// Libraries with cofactorless verification that reject the first vector,
+// but accept the second do not reduce A prior to hashing.
+// Both vectors pass for cofactored verification.
 #[allow(dead_code)]
 pub fn non_zero_mixed_small_non_canonical() -> Result<Vec<TestVector>> {
     let mut vec = Vec::new();
 
-    // pk not identity, with incorrect x sign and y coordinate larger than p
+    // pk not identity, with only incorrect x sign
     let pub_key_arr = EIGHT_TORSION_NON_CANONICAL[2];
+
     let mut rng = new_rng();
     // Pick a random Scalar
     let mut scalar_bytes = [0u8; 32];
@@ -950,7 +944,7 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<Vec<TestVector>> {
     debug_assert!(verify_cofactored(&message, &pub_key, &(r, s)).is_ok());
     debug_assert!(verify_cofactorless(&message, &pub_key, &(r, s)).is_err());
     debug!(
-        "S > 0, negative-zero non-canonical A, mixed R\n\
+        "S > 0, non-canonical A, mixed R\n\
          passes cofactored, passes cofactorless, repudiable\n\
          does not reserialize A\n\
          \"message\": \"{}\", \"pub_key\": \"{}\", \"signature\": \"{}\"",
@@ -1043,11 +1037,11 @@ fn generate_test_vectors() -> Result<Vec<TestVector>> {
     vec.append(&mut tv_vec);
 
     // #10-11 Non canonical A
-    // let mut tv_vec = non_zero_mixed_small_non_canonical().unwrap();
-    // assert!(tv_vec.len() == 2);
-    // info.append(format!("|10| ..{:} | ..{:} |  < L | small*| mixed |    V   |    V     | non-canonical A, reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
-    // info.append(format!("|11| ..{:} | ..{:} |  < L | small*| mixed |    V   |    V     | non-canonical A, not reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
-    // vec.append(&mut tv_vec);
+    let mut tv_vec = non_zero_mixed_small_non_canonical().unwrap();
+    assert!(tv_vec.len() == 2);
+    info.append(format!("|10| ..{:} | ..{:} |  < L | small*| mixed |    V   |    V     | non-canonical A, reduced for hash |\n", &hex::encode(&tv_vec[0].message)[60..], &hex::encode(&tv_vec[0].signature)[124..]));
+    info.append(format!("|11| ..{:} | ..{:} |  < L | small*| mixed |    V   |    V     | non-canonical A, not reduced for hash |\n", &hex::encode(&tv_vec[1].message)[60..], &hex::encode(&tv_vec[1].signature)[124..]));
+    vec.append(&mut tv_vec);
 
     // print!("{}", info.string().unwrap());
 
