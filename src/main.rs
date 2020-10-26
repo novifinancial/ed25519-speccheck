@@ -1144,7 +1144,7 @@ mod tests {
             match Signature::try_from(&tv.signature[..]) {
                 Ok(_v) => {}
                 Err(_e) => {
-                    print!(" V |");
+                    print!(" X |");
                     continue;
                 }
             }
@@ -1167,7 +1167,7 @@ mod tests {
             match Signature::try_from(&tv.signature[..]) {
                 Ok(_v) => {}
                 Err(_e) => {
-                    print!(" V |");
+                    print!(" X |");
                     continue;
                 }
             }

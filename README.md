@@ -94,8 +94,8 @@ For a total of 12 test vectors.
 |BoringSSL      | V | V | V | V | X | X | X | X | X | X | X | V |
 |BouncyCastle   | V | V | V | V | X | X | X | X | X | X | X | X |
 |CryptoKit      | V | V | V | V | X | X | X | X | X | X | X | V |
-|Dalek          | V | V | V | V | X | X | X | V | X | X | X | V |
-|Dalek strict   | X | X | X | V | X | X | X | V | X | X | X | X |
+|Dalek          | V | V | V | V | X | X | X | X | X | X | X | V |
+|Dalek strict   | X | X | X | V | X | X | X | X | X | X | X | X |
 |ed25519-donna  | V | V | V | V | X | X | V | X | X | X | X | V |
 |ed25519-java   | V | V | V | V | X | X | V | V | X | X | V | X |
 |Go             | V | V | V | V | X | X | X | X | X | X | X | V |
