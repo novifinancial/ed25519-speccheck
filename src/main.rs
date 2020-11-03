@@ -1087,6 +1087,17 @@ mod tests {
         (pk, sig)
     }
 
+    fn unpack_test_vector_hacl(
+        t: &TestVector,
+    ) -> (hacl_star::ed25519::PublicKey, hacl_star::ed25519::Signature) {
+        let mut sig_bytes = [0u8; 64];
+        sig_bytes.copy_from_slice(&t.signature[..]);
+
+        let pk = hacl_star::ed25519::PublicKey(t.pub_key);
+        let sig = hacl_star::ed25519::Signature(sig_bytes);
+        (pk, sig)
+    }
+
     fn unpack_test_vector_zebra(t: &TestVector) -> (ZPublicKey, ZSignature) {
         let pk = ZPublicKey::try_from(&t.pub_key[..]).unwrap();
         let sig = ZSignature::try_from(&t.signature[..]).unwrap();
@@ -1130,6 +1141,22 @@ mod tests {
             {
                 Ok(_v) => print!(" V |"),
                 Err(_e) => print!(" X |"),
+            }
+        }
+        println!();
+    }
+
+    #[test]
+    fn test_hacl() {
+        let vec = generate_test_vectors().unwrap();
+
+        print!("\n|Hacl*          |");
+        for tv in vec.iter() {
+            let (pk, sig) = unpack_test_vector_hacl(&tv);
+            if pk.verify(&tv.message[..], &sig) {
+                print!(" V |");
+            } else {
+                print!(" X |");
             }
         }
         println!();
