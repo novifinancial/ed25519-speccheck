@@ -6,6 +6,7 @@
 |ed25519-donna  | V | V | V | V | X | X | V | X | X | X | X | V |
 |ed25519-java   | V | V | V | V | X | X | V | V | X | X | V | X |
 |Go             | V | V | V | V | X | X | X | X | X | X | X | V |
+|Hacl*          | V | V | V | V | X | X | X | X | X | X | X | X |
 |libra-crypto   | X | X | X | V | X | X | X | X | X | X | X | X |
 |LibSodium      | X | X | X | V | X | X | X | X | X | X | X | X |
 |npm            | V | V | V | V | X | X | X | X | X | X | X | V |
