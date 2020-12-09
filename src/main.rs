@@ -1074,9 +1074,9 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use diem_crypto;
     use ed25519_dalek::{PublicKey, Signature, Verifier};
     use ed25519_zebra::{Signature as ZSignature, VerificationKey as ZPublicKey};
-    use libra_crypto;
     use ring::signature;
     use std::convert::TryFrom;
     use untrusted;
@@ -1118,27 +1118,26 @@ mod tests {
     }
 
     #[test]
-    fn test_libra() {
+    fn test_diem() {
         let vec = generate_test_vectors().unwrap();
 
-        print!("\n|libra-crypto   |");
+        print!("\n|diem-crypto   |");
         for tv in vec.iter() {
-            let pk = match libra_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
+            let pk = match diem_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
                 Ok(pk) => pk,
                 Err(_e) => {
                     print!(" X |");
                     continue;
                 }
             };
-            let sig = match libra_crypto::ed25519::Ed25519Signature::try_from(&tv.signature[..]) {
+            let sig = match diem_crypto::ed25519::Ed25519Signature::try_from(&tv.signature[..]) {
                 Ok(sig) => sig,
                 Err(_e) => {
                     print!(" X |");
                     continue;
                 }
             };
-            match libra_crypto::traits::Signature::verify_arbitrary_msg(&sig, &tv.message[..], &pk)
-            {
+            match diem_crypto::traits::Signature::verify_arbitrary_msg(&sig, &tv.message[..], &pk) {
                 Ok(_v) => print!(" V |"),
                 Err(_e) => print!(" X |"),
             }
