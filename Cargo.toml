@@ -2,7 +2,7 @@
 name = "ed25519-speccheck"
 version = "0.1.0"
 repository = "https://github.com/novifinancial/ed25519-speccheck"
-description = "An implementation of the OPAQUE password-authenticated key exchange protocol"
+description = "An implementation of the tests described in https://eprint.iacr.org/2020/1244"
 authors = ["Konstantinos Chalkias <kostascrypto@fb.com>", "François Garillot <fga@fb.com>", "Valeria Nikolaenko <valerini@fb.com>"]
 license = "Apache-2.0"
 edition = "2018"
