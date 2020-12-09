@@ -1,9 +1,12 @@
 [package]
 name = "ed25519-speccheck"
 version = "0.1.0"
-authors = ["François Garillot <francois@garillot.net>"]
+repository = "https://github.com/novifinancial/ed25519-speccheck"
+description = "An implementation of the OPAQUE password-authenticated key exchange protocol"
+authors = ["Konstantinos Chalkias <kostascrypto@fb.com>", "François Garillot <fga@fb.com>", "Valeria Nikolaenko <valerini@fb.com>"]
+license = "Apache-2.0"
 edition = "2018"
-
+readme = "README.md"
 
 [dependencies]
 anyhow = "1.0.32"
