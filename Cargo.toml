@@ -1,17 +1,20 @@
 [package]
 name = "ed25519-speccheck"
 version = "0.1.0"
-authors = ["François Garillot <francois@garillot.net>"]
+repository = "https://github.com/novifinancial/ed25519-speccheck"
+description = "An implementation of the tests described in https://eprint.iacr.org/2020/1244"
+authors = ["Konstantinos Chalkias <kostascrypto@fb.com>", "François Garillot <fga@fb.com>", "Valeria Nikolaenko <valerini@fb.com>"]
+license = "Apache-2.0"
 edition = "2018"
-
+readme = "README.md"
 
 [dependencies]
 anyhow = "1.0.32"
 curve25519-dalek = "2.1.0"
-hacl-star = { git = "https://github.com/quininer/rust-hacl-star", version = "0.2.0"}
+hacl-star = { git = "https://github.com/huitseeker/rust-hacl-star", version = "0.2.0"}
 hex = "0.4.2"
 rand = "0.7.3"
-sha2 = "0.9.1"
+sha2 = "0.9.2"
 serde_json = "1.0"
 serde = { version = "1.0.115", features = ["derive"] }
 log = "0.4.11"
@@ -23,4 +26,4 @@ ed25519-dalek = "1.0.0-pre.4"
 ed25519-zebra = "2.1.1"
 ring = "0.16.5"
 untrusted = "0.7.1"
-libra-crypto = { git = "https://github.com/libra/libra.git" }
+diem-crypto = { git = "https://github.com/diem/diem.git" }

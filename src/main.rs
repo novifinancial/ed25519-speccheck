@@ -602,7 +602,7 @@ pub fn non_zero_mixed_mixed() -> Result<(TestVector, TestVector)> {
 // 8 (pre-reduced scalar) //
 ////////////////////////////
 
-fn pre_reduced_scalar() -> Result<TestVector> {
+fn pre_reduced_scalar() -> TestVector {
     let mut rng = new_rng();
 
     // Pick a random scalar
@@ -658,12 +658,11 @@ fn pre_reduced_scalar() -> Result<TestVector> {
         hex::encode(&pub_key.compress().as_bytes()),
         hex::encode(&serialize_signature(&r, &s))
     );
-    let tv = TestVector {
+    TestVector {
         message,
         pub_key: pub_key.compress().to_bytes(),
         signature: serialize_signature(&r, &s),
-    };
-    Ok(tv)
+    }
 }
 
 mod non_reducing_scalar52;
@@ -962,7 +961,7 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<Vec<TestVector>> {
     Ok(vec)
 }
 
-fn generate_test_vectors() -> Result<Vec<TestVector>> {
+fn generate_test_vectors() -> Vec<TestVector> {
     let mut info = Builder::default();
     info.append("|  |    msg |    sig |  S   |    A  |    R  | cof-ed | cof-less |        comment        |\n");
     info.append("|---------------------------------------------------------------------------------------|\n");
@@ -1007,7 +1006,7 @@ fn generate_test_vectors() -> Result<Vec<TestVector>> {
     vec.push(tv1); // passes cofactored, fails cofactorless
 
     // #5 Prereduce scalar which fails cofactorless
-    let tv1 = pre_reduced_scalar().unwrap();
+    let tv1 = pre_reduced_scalar();
     info.append(format!("| 5| ..{:} | ..{:} |  < L | mixed |   L   |    V*  |    X     | fails cofactored iff (8h) prereduced |\n", &hex::encode(&tv1.message)[60..], &hex::encode(&tv1.signature)[124..]));
     vec.push(tv1);
 
@@ -1045,12 +1044,12 @@ fn generate_test_vectors() -> Result<Vec<TestVector>> {
 
     // print!("{}", info.string().unwrap());
 
-    Ok(vec)
+    vec
 }
 
 fn main() -> Result<()> {
     env_logger::init();
-    let vec = generate_test_vectors().unwrap();
+    let vec = generate_test_vectors();
 
     // Write test vectors to json
     let cases_json = serde_json::to_string(&vec)?;
@@ -1074,9 +1073,9 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use diem_crypto;
     use ed25519_dalek::{PublicKey, Signature, Verifier};
     use ed25519_zebra::{Signature as ZSignature, VerificationKey as ZPublicKey};
-    use libra_crypto;
     use ring::signature;
     use std::convert::TryFrom;
     use untrusted;
@@ -1118,27 +1117,26 @@ mod tests {
     }
 
     #[test]
-    fn test_libra() {
-        let vec = generate_test_vectors().unwrap();
+    fn test_diem() {
+        let vec = generate_test_vectors();
 
-        print!("\n|libra-crypto   |");
+        print!("\n|diem-crypto   |");
         for tv in vec.iter() {
-            let pk = match libra_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
+            let pk = match diem_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
                 Ok(pk) => pk,
                 Err(_e) => {
                     print!(" X |");
                     continue;
                 }
             };
-            let sig = match libra_crypto::ed25519::Ed25519Signature::try_from(&tv.signature[..]) {
+            let sig = match diem_crypto::ed25519::Ed25519Signature::try_from(&tv.signature[..]) {
                 Ok(sig) => sig,
                 Err(_e) => {
                     print!(" X |");
                     continue;
                 }
             };
-            match libra_crypto::traits::Signature::verify_arbitrary_msg(&sig, &tv.message[..], &pk)
-            {
+            match diem_crypto::traits::Signature::verify_arbitrary_msg(&sig, &tv.message[..], &pk) {
                 Ok(_v) => print!(" V |"),
                 Err(_e) => print!(" X |"),
             }
@@ -1148,7 +1146,7 @@ mod tests {
 
     #[test]
     fn test_hacl() {
-        let vec = generate_test_vectors().unwrap();
+        let vec = generate_test_vectors();
 
         print!("\n|Hacl*          |");
         for tv in vec.iter() {
@@ -1164,7 +1162,7 @@ mod tests {
 
     #[test]
     fn test_dalek() {
-        let vec = generate_test_vectors().unwrap();
+        let vec = generate_test_vectors();
 
         print!("\n|Dalek          |");
         for tv in vec.iter() {
@@ -1187,7 +1185,7 @@ mod tests {
 
     #[test]
     fn test_dalek_verify_strict() {
-        let vec = generate_test_vectors().unwrap();
+        let vec = generate_test_vectors();
 
         print!("\n|Dalek strict   |");
         for tv in vec.iter() {
@@ -1210,7 +1208,7 @@ mod tests {
 
     #[test]
     fn test_boringssl() {
-        let vec = generate_test_vectors().unwrap();
+        let vec = generate_test_vectors();
 
         print!("\n|BoringSSL      |");
         for tv in vec.iter() {
@@ -1224,7 +1222,7 @@ mod tests {
 
     #[test]
     fn test_zebra() {
-        let vec = generate_test_vectors().unwrap();
+        let vec = generate_test_vectors();
 
         print!("\n|Zebra          |");
         for tv in vec.iter() {
