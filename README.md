@@ -5,7 +5,7 @@ in the implementation of the algorithm. Namely, we test bounds checks on points
 and scalars involved in a signature, along with cofactored vs. cofactorless verification.
 
 We hope this helps outline the measures needed to implement the FIPS 186-5 and
-RFC 8032 standards rigorously. For more information, read our [paper])(https://eprint.iacr.org/2020/1244, published
+RFC 8032 standards rigorously. For more information, read our [paper](https://eprint.iacr.org/2020/1244), published
 [at SSR'20](https://ssr2020.mozilla.org/accepted-papers).
 
 You can run this utility with `RUST_LOG=debug cargo run` to get a list of the
