@@ -14,5 +14,6 @@
 |PyCA           | V | V | V | V | X | X | X | X | X | X | X | V |
 |python-ed25519 | V | V | V | V | X | X | V | V | X | X | X | V |
 |ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
+|TweetNaCl      | V | V | V | V | X | X | V | V | X | X | X | V |
 |TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
 |Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |

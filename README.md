@@ -83,7 +83,8 @@ For a total of 12 test vectors.
 - [Pyca](https://cryptography.io/en/latest/) using OpenSSL 1.1.1g as default backend : in `scripts/pyca-openssl`
 - [python-ed25519](https://github.com/warner/python-ed25519)) : in `scripts/python-ed25519`
 - [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in `scripts/python-ed25519.py`
-- [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl`
+- [tweetnacl](https://tweetnacl.cr.yp.to/software.html) version 20140427
+- [tweetnacl.js](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl`
 - [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests
 
 ## Results
@@ -107,6 +108,7 @@ For a total of 12 test vectors.
 |PyCA           | V | V | V | V | X | X | X | X | X | X | X | V |
 |python-ed25519 | V | V | V | V | X | X | V | V | X | X | X | V |
 |ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
+|TweetNaCl      | V | V | V | V | X | X | V | V | X | X | X | V |
 |TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
 |Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |
  ---------------------------------------------------------------
