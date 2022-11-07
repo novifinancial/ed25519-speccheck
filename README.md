@@ -86,6 +86,7 @@ For a total of 12 test vectors.
 - [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in `scripts/python-ed25519.py`
 - [tweetnacl](https://tweetnacl.cr.yp.to/software.html) version 20140427 : in `scripts/tweetnacl`
 - [tweetnacl.js](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl-js`
+- [wolfSSL](https://github.com/wolfSSL/wolfssl) version 5.5.3 : in `scripts/wolfssl`
 - [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests
 
 ## Results
@@ -112,9 +113,12 @@ For a total of 12 test vectors.
 |ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
 |TweetNaCl      | V | V | V | V | X | X | V | V | X | X | X | V |
 |TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
+|WOLFSSL 5.5.3  | V | V | V | V | E | E | E | E | E | E | E | V |
 |Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |
  ---------------------------------------------------------------
 ```
+Note that wolfSSL can return three options, verified (V), not verfied
+(X) and error in verification procedure (E).
 
 Contributors
 ------------

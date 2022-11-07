@@ -17,4 +17,5 @@
 |ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
 |TweetNaCl      | V | V | V | V | X | X | V | V | X | X | X | V |
 |TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
+|WOLFSSL 5.5.3  | V | V | V | V | E | E | E | E | E | E | E | V |
 |Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |
