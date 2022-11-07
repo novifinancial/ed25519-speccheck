@@ -16,3 +16,4 @@
 |ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
 |TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
 |Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |
+|Zig            | X | X | V | V | V | V | X | X | X | X | X | X |

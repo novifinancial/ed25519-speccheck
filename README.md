@@ -85,6 +85,7 @@ For a total of 12 test vectors.
 - [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in `scripts/python-ed25519.py`
 - [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl`
 - [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests
+- [Zig](https://ziglang.org) : in `scripts/zig`
 
 ## Results
 
@@ -109,6 +110,7 @@ For a total of 12 test vectors.
 |ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
 |TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
 |Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |
+|Zig            | X | X | V | V | V | V | X | X | X | X | X | X |
  ---------------------------------------------------------------
 ```
 
@@ -127,3 +129,4 @@ License
 -------
 
 This project is [Apache 2.0 licensed](./LICENSE).
+

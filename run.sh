@@ -133,6 +133,13 @@ fi
 
 ./test_script.sh
 popd
+
+# zig
+if command -v zig &> /dev/null; then
+  pushd "$SOURCE_DIR/scripts/zig"
+  zig build run < ../../cases.txt
+  popd
+fi
 }
 
 main > results.md  2>/dev/null
