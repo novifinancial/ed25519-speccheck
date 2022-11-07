@@ -9,6 +9,7 @@
 |Hacl*          | V | V | V | V | X | X | X | X | X | X | X | X |
 |libra-crypto   | X | X | X | V | X | X | X | X | X | X | X | X |
 |LibSodium      | X | X | X | V | X | X | X | X | X | X | X | X |
+|Monocypher     | V | V | V | V | X | X | X | X | X | X | X | V |
 |npm            | V | V | V | V | X | X | X | X | X | X | X | V |
 |OpenSSL-3.0    | V | V | V | V | X | X | X | X | X | X | X | V |
 |PyCA           | V | V | V | V | X | X | X | X | X | X | X | V |

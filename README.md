@@ -77,14 +77,15 @@ For a total of 12 test vectors.
 - [Go-ed25519](https://golang.org/pkg/crypto/ed25519/) : in `scripts/ed25519_test.go`
 - [libra-crypto](https://github.com/libra/libra/tree/master/crypto/crypto) : in unit tests
 - LibSodium, through [pynacl](https://github.com/pyca/pynacl) : in `scripts/pynacl_test.py`
+- [Monocypher](https://monocypher.org) : in `scripts/monocypher`
 - nCipher's ed25519, by Rob Starkey
 - [npm's ed25519](https://www.npmjs.com/package/ed25519) : in `scripts/eddsa_test`
 - [OpenSSL](https://github.com/openssl/openssl) : in `scripts openssl_3/test_script.sh`
 - [Pyca](https://cryptography.io/en/latest/) using OpenSSL 1.1.1g as default backend : in `scripts/pyca-openssl`
 - [python-ed25519](https://github.com/warner/python-ed25519)) : in `scripts/python-ed25519`
 - [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in `scripts/python-ed25519.py`
-- [tweetnacl](https://tweetnacl.cr.yp.to/software.html) version 20140427
-- [tweetnacl.js](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl`
+- [tweetnacl](https://tweetnacl.cr.yp.to/software.html) version 20140427 : in `scripts/tweetnacl`
+- [tweetnacl.js](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl-js`
 - [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests
 
 ## Results
@@ -103,6 +104,7 @@ For a total of 12 test vectors.
 |Go             | V | V | V | V | X | X | X | X | X | X | X | V |
 |libra-crypto   | X | X | X | V | X | X | X | X | X | X | X | X |
 |LibSodium      | X | X | X | V | X | X | X | X | X | X | X | X |
+|Monocypher     | V | V | V | V | X | X | X | X | X | X | X | V |
 |npm            | V | V | V | V | X | X | X | X | X | X | X | V |
 |OpenSSL-3.0    | V | V | V | V | X | X | X | X | X | X | X | V |
 |PyCA           | V | V | V | V | X | X | X | X | X | X | X | V |
