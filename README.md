@@ -70,6 +70,7 @@ For a total of 12 test vectors.
 
 - [Apple CryptoKit](https://developer.apple.com/documentation/cryptokit) : in `scripts/ed25519-ios`
 - BoringSSL, through [Ring](https://github.com/briansmith/ring) : in unit tests
+- [Botan](https://github.com/randombit/botan) : `scripts/botan`
 - [Bouncy Castle (Java)](https://www.bouncycastle.org/java.html) version 1.66 : in `scripts/ed25519-java`
 - [Dalek](https://github.com/dalek-cryptography/ed25519-dalek) : in unit tests
 - [ed25519-donna from Signal](https://github.com/signalapp/libsignal-protocol-c.git): in `scripts/ed25519-signal-donna`
@@ -96,6 +97,7 @@ For a total of 12 test vectors.
 |Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11|
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---|
 |BoringSSL      | V | V | V | V | X | X | X | X | X | X | X | V |
+|Botan          | V | V | V | V | X | X | V | X | X | X | X | V |
 |BouncyCastle   | V | V | V | V | X | X | X | X | X | X | X | X |
 |CryptoKit      | V | V | V | V | X | X | X | X | X | X | X | V |
 |Dalek          | V | V | V | V | X | X | X | X | X | X | X | V |

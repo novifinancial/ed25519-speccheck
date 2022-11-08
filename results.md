@@ -1,4 +1,5 @@
 |BoringSSL      | V | V | V | V | X | X | X | X | X | X | X | V |
+|Botan          | V | V | V | V | X | X | V | X | X | X | X | V |
 |BouncyCastle   | V | V | V | V | X | X | X | X | X | X | X | X |
 |CryptoKit      | V | V | V | V | X | X | X | X | X | X | X | V |
 |Dalek          | V | V | V | V | X | X | X | X | X | X | X | V |
