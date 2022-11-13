@@ -70,20 +70,26 @@ For a total of 12 test vectors.
 
 - [Apple CryptoKit](https://developer.apple.com/documentation/cryptokit) : in `scripts/ed25519-ios`
 - BoringSSL, through [Ring](https://github.com/briansmith/ring) : in unit tests
+- [Botan](https://github.com/randombit/botan) : `scripts/botan`
 - [Bouncy Castle (Java)](https://www.bouncycastle.org/java.html) version 1.66 : in `scripts/ed25519-java`
 - [Dalek](https://github.com/dalek-cryptography/ed25519-dalek) : in unit tests
 - [ed25519-donna from Signal](https://github.com/signalapp/libsignal-protocol-c.git): in `scripts/ed25519-signal-donna`
 - [ed25519-java](https://github.com/str4d/ed25519-java) version 0.3.0 : in `scripts/ed25519-java`
 - [Go-ed25519](https://golang.org/pkg/crypto/ed25519/) : in `scripts/ed25519_test.go`
+- [Libgcrypt](https://www.gnupg.org/software/libgcrypt/index.html) version 1.10.1 : in `scripts/libgcrypt`
 - [libra-crypto](https://github.com/libra/libra/tree/master/crypto/crypto) : in unit tests
+- [Libressl](https://www.libressl.org/) patched version 3.6.1 : in `scripts/libressl`
 - LibSodium, through [pynacl](https://github.com/pyca/pynacl) : in `scripts/pynacl_test.py`
+- [Monocypher](https://monocypher.org) : in `scripts/monocypher`
 - nCipher's ed25519, by Rob Starkey
 - [npm's ed25519](https://www.npmjs.com/package/ed25519) : in `scripts/eddsa_test`
 - [OpenSSL](https://github.com/openssl/openssl) : in `scripts openssl_3/test_script.sh`
 - [Pyca](https://cryptography.io/en/latest/) using OpenSSL 1.1.1g as default backend : in `scripts/pyca-openssl`
 - [python-ed25519](https://github.com/warner/python-ed25519)) : in `scripts/python-ed25519`
 - [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in `scripts/python-ed25519.py`
-- [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl`
+- [tweetnacl](https://tweetnacl.cr.yp.to/software.html) version 20140427 : in `scripts/tweetnacl`
+- [tweetnacl.js](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl-js`
+- [wolfSSL](https://github.com/wolfSSL/wolfssl) version 5.5.3 : in `scripts/wolfssl`
 - [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests
 
 ## Results
@@ -93,6 +99,7 @@ For a total of 12 test vectors.
 |Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11|
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---|
 |BoringSSL      | V | V | V | V | X | X | X | X | X | X | X | V |
+|Botan          | V | V | V | V | X | X | V | X | X | X | X | V |
 |BouncyCastle   | V | V | V | V | X | X | X | X | X | X | X | X |
 |CryptoKit      | V | V | V | V | X | X | X | X | X | X | X | V |
 |Dalek          | V | V | V | V | X | X | X | X | X | X | X | V |
@@ -100,14 +107,19 @@ For a total of 12 test vectors.
 |ed25519-donna  | V | V | V | V | X | X | V | X | X | X | X | V |
 |ed25519-java   | V | V | V | V | X | X | V | V | X | X | V | X |
 |Go             | V | V | V | V | X | X | X | X | X | X | X | V |
+|Libgcyrpt      | X | X | V | X | X | X | V | V | X | X | X | X |
 |libra-crypto   | X | X | X | V | X | X | X | X | X | X | X | X |
+|LibreSSL-3.6.1 | V | V | V | V | X | X | V | X | X | X | X | V |
 |LibSodium      | X | X | X | V | X | X | X | X | X | X | X | X |
+|Monocypher     | V | V | V | V | X | X | X | X | X | X | X | V |
 |npm            | V | V | V | V | X | X | X | X | X | X | X | V |
 |OpenSSL-3.0    | V | V | V | V | X | X | X | X | X | X | X | V |
 |PyCA           | V | V | V | V | X | X | X | X | X | X | X | V |
 |python-ed25519 | V | V | V | V | X | X | V | V | X | X | X | V |
 |ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
+|TweetNaCl      | V | V | V | V | X | X | V | V | X | X | X | V |
 |TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
+|WOLFSSL 5.5.3  | V | V | V | V | X | X | X | X | X | X | X | V |
 |Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |
  ---------------------------------------------------------------
 ```

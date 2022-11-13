@@ -1,0 +1,131 @@
+diff -ruN libressl-3.6.1/crypto/crypto.sym libressl-3.6.1-mod/crypto/crypto.sym
+--- libressl-3.6.1/crypto/crypto.sym	2022-10-25 03:57:46.000000000 +0300
++++ libressl-3.6.1-mod/crypto/crypto.sym	2022-11-13 19:00:17.733448120 +0300
+@@ -1242,6 +1242,9 @@
+ EC_curve_nid2nist
+ EC_curve_nist2nid
+ EC_get_builtin_curves
++ED25519_keypair
++ED25519_sign
++ED25519_verify
+ EDIPARTYNAME_free
+ EDIPARTYNAME_it
+ EDIPARTYNAME_new
+diff -ruN libressl-3.6.1/crypto/curve25519/curve25519.c libressl-3.6.1-mod/crypto/curve25519/curve25519.c
+--- libressl-3.6.1/crypto/curve25519/curve25519.c	2022-03-15 19:37:03.000000000 +0300
++++ libressl-3.6.1-mod/crypto/curve25519/curve25519.c	2022-11-13 18:59:23.019622207 +0300
+@@ -29,9 +29,7 @@
+ 
+ #include <openssl/curve25519.h>
+ 
+-#ifdef ED25519
+ #include <openssl/sha.h>
+-#endif
+ 
+ #include "curve25519_internal.h"
+ 
+@@ -979,7 +977,6 @@
+   s[31] ^= fe_isnegative(x) << 7;
+ }
+ 
+-#ifdef ED25519
+ static void ge_p3_tobytes(uint8_t *s, const ge_p3 *h) {
+   fe recip;
+   fe x;
+@@ -991,7 +988,6 @@
+   fe_tobytes(s, y);
+   s[31] ^= fe_isnegative(x) << 7;
+ }
+-#endif
+ 
+ static const fe d = {-10913610, 13857413, -15372611, 6949391,   114729,
+                      -8787816,  -6275908, -3247719,  -18696448, -12055116};
+@@ -1146,7 +1142,6 @@
+   fe_sub(r->T, t0, r->T);
+ }
+ 
+-#ifdef ED25519
+ /* r = p - q */
+ static void ge_msub(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q) {
+   fe t0;
+@@ -1162,7 +1157,6 @@
+   fe_sub(r->Z, t0, r->T);
+   fe_add(r->T, t0, r->T);
+ }
+-#endif
+ 
+ /* r = p + q */
+ void x25519_ge_add(ge_p1p1 *r, const ge_p3 *p, const ge_cached *q) {
+@@ -3624,7 +3618,6 @@
+   }
+ }
+ 
+-#ifdef ED25519
+ static void slide(signed char *r, const uint8_t *a) {
+   int i;
+   int b;
+@@ -3799,7 +3792,6 @@
+     x25519_ge_p1p1_to_p2(r, &t);
+   }
+ }
+-#endif
+ 
+ /* The set of scalars is \Z/l
+  * where l = 2^252 + 27742317777372353535851937790883648493. */
+@@ -4145,7 +4137,6 @@
+   s[31] = s11 >> 17;
+ }
+ 
+-#ifdef ED25519
+ /* Input:
+  *   a[0]+256*a[1]+...+256^31*a[31] = a
+  *   b[0]+256*b[1]+...+256^31*b[31] = b
+@@ -4636,9 +4627,7 @@
+   s[30] = s11 >> 9;
+   s[31] = s11 >> 17;
+ }
+-#endif
+ 
+-#ifdef ED25519
+ void ED25519_keypair(uint8_t out_public_key[32], uint8_t out_private_key[64]) {
+   uint8_t seed[32];
+   arc4random_buf(seed, 32);
+@@ -4728,7 +4717,6 @@
+ 
+   return timingsafe_memcmp(rcheck, rcopy, sizeof(rcheck)) == 0;
+ }
+-#endif
+ 
+ /* Replace (f,g) with (g,f) if b == 1;
+  * replace (f,g) with (f,g) if b == 0.
+diff -ruN libressl-3.6.1/include/openssl/curve25519.h libressl-3.6.1-mod/include/openssl/curve25519.h
+--- libressl-3.6.1/include/openssl/curve25519.h	2022-02-19 01:30:39.000000000 +0300
++++ libressl-3.6.1-mod/include/openssl/curve25519.h	2022-11-13 18:58:20.692820519 +0300
+@@ -61,6 +61,27 @@
+     const uint8_t private_key[X25519_KEY_LENGTH],
+     const uint8_t peers_public_value[X25519_KEY_LENGTH]);
+ 
++/*
++ * ED25519.
++ *
++ * ED25519 is the public key signature scheme from curve25519.
++ * See http://ed25519.cr.yp.to/ and https://tools.ietf.org/html/rfc8032.
++ */
++
++void ED25519_keypair(uint8_t out_public_key[32],
++		uint8_t out_private_key[64]);
++
++int ED25519_sign(uint8_t *out_sig,
++		const uint8_t *message,
++		size_t message_len,
++                 const uint8_t private_key[64]);
++
++int ED25519_verify(const uint8_t *message,
++		   size_t message_len,
++                   const uint8_t signature[64],
++		   const uint8_t public_key[32]);
++
++
+ #if defined(__cplusplus)
+ }  /* extern C */
+ #endif
