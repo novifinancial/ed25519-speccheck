@@ -78,6 +78,7 @@ For a total of 12 test vectors.
 - [Go-ed25519](https://golang.org/pkg/crypto/ed25519/) : in `scripts/ed25519_test.go`
 - [Libgcrypt](https://www.gnupg.org/software/libgcrypt/index.html) version 1.10.1 : in `scripts/libgcrypt`
 - [libra-crypto](https://github.com/libra/libra/tree/master/crypto/crypto) : in unit tests
+- [Libressl](https://www.libressl.org/) patched version 3.6.1 : in `scripts/libressl`
 - LibSodium, through [pynacl](https://github.com/pyca/pynacl) : in `scripts/pynacl_test.py`
 - [Monocypher](https://monocypher.org) : in `scripts/monocypher`
 - nCipher's ed25519, by Rob Starkey
@@ -108,6 +109,7 @@ For a total of 12 test vectors.
 |Go             | V | V | V | V | X | X | X | X | X | X | X | V |
 |Libgcyrpt      | X | X | V | X | X | X | V | V | X | X | X | X |
 |libra-crypto   | X | X | X | V | X | X | X | X | X | X | X | X |
+|LibreSSL-3.6.1 | V | V | V | V | X | X | V | X | X | X | X | V |
 |LibSodium      | X | X | X | V | X | X | X | X | X | X | X | X |
 |Monocypher     | V | V | V | V | X | X | X | X | X | X | X | V |
 |npm            | V | V | V | V | X | X | X | X | X | X | X | V |

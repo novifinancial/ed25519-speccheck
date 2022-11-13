@@ -10,6 +10,7 @@
 |Hacl*          | V | V | V | V | X | X | X | X | X | X | X | X |
 |Libgcyrpt      | X | X | V | X | X | X | V | V | X | X | X | X |
 |libra-crypto   | X | X | X | V | X | X | X | X | X | X | X | X |
+|LibreSSL-3.6.1 | V | V | V | V | X | X | V | X | X | X | X | V |
 |LibSodium      | X | X | X | V | X | X | X | X | X | X | X | X |
 |Monocypher     | V | V | V | V | X | X | X | X | X | X | X | V |
 |npm            | V | V | V | V | X | X | X | X | X | X | X | V |
