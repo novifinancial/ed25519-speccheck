@@ -76,6 +76,7 @@ For a total of 12 test vectors.
 - [ed25519-donna from Signal](https://github.com/signalapp/libsignal-protocol-c.git): in `scripts/ed25519-signal-donna`
 - [ed25519-java](https://github.com/str4d/ed25519-java) version 0.3.0 : in `scripts/ed25519-java`
 - [Go-ed25519](https://golang.org/pkg/crypto/ed25519/) : in `scripts/ed25519_test.go`
+- [Libgcrypt](https://www.gnupg.org/software/libgcrypt/index.html) version 1.10.1 : in `scripts/libgcrypt`
 - [libra-crypto](https://github.com/libra/libra/tree/master/crypto/crypto) : in unit tests
 - LibSodium, through [pynacl](https://github.com/pyca/pynacl) : in `scripts/pynacl_test.py`
 - [Monocypher](https://monocypher.org) : in `scripts/monocypher`
@@ -105,6 +106,7 @@ For a total of 12 test vectors.
 |ed25519-donna  | V | V | V | V | X | X | V | X | X | X | X | V |
 |ed25519-java   | V | V | V | V | X | X | V | V | X | X | V | X |
 |Go             | V | V | V | V | X | X | X | X | X | X | X | V |
+|Libgcyrpt      | X | X | V | X | X | X | V | V | X | X | X | X |
 |libra-crypto   | X | X | X | V | X | X | X | X | X | X | X | X |
 |LibSodium      | X | X | X | V | X | X | X | X | X | X | X | X |
 |Monocypher     | V | V | V | V | X | X | X | X | X | X | X | V |
@@ -115,12 +117,10 @@ For a total of 12 test vectors.
 |ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
 |TweetNaCl      | V | V | V | V | X | X | V | V | X | X | X | V |
 |TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
-|WOLFSSL 5.5.3  | V | V | V | V | E | E | E | E | E | E | E | V |
+|WOLFSSL 5.5.3  | V | V | V | V | X | X | X | X | X | X | X | V |
 |Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |
  ---------------------------------------------------------------
 ```
-Note that wolfSSL can return three options, verified (V), not verfied
-(X) and error in verification procedure (E).
 
 Contributors
 ------------
